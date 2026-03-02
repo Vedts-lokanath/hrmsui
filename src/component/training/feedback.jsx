@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../navbar/Navbar";
 import { format } from "date-fns";
@@ -35,35 +35,6 @@ const Feedback = () => {
         seminarVenue: "",
 
     });
-
-    const [requisition, setRequisition] = useState({
-        initiatingOfficerName: "",
-        divisionName: "",
-        designation: "",
-        programName: "",
-        organizer: "",
-        duration: "",
-        fromDate: "",
-        toDate: "",
-    })
-
-    useEffect(() => {
-        if (item) {
-            setRequisition({
-                initiatingOfficerName: item?.initiatingOfficerName || "",
-                divisionName: item?.empDivCode || "",
-                programName: item?.programName || "",
-                organizer: item?.organizer || "",
-                duration: item?.duration || "",
-                fromDate: item?.fromDate
-                    ? format(new Date(item.fromDate), "dd-MM-yyyy")
-                    : "",
-                toDate: item?.toDate
-                    ? format(new Date(item.toDate), "dd-MM-yyyy")
-                    : "",
-            });
-        }
-    }, [item]);
 
     const feedbackRows = [
         { id: "course", label: "Quality of course material" },
@@ -157,7 +128,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={requisition.initiatingOfficerName || ""}
+                                    value={item?.initiatingOfficerName || ""}
                                     disabled
                                 />
                             </div>
@@ -167,7 +138,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={requisition.divisionName || ""}
+                                    value={item?.empDivCode || ""}
                                     disabled
                                 />
                             </div>
@@ -177,7 +148,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={requisition.organizer || ""}
+                                    value={item?.organizer || ""}
                                     disabled
                                 />
                             </div>
@@ -189,7 +160,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={requisition.programName || ""}
+                                    value={item?.programName || ""}
                                     disabled
                                 />
                             </div>
@@ -200,7 +171,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={requisition.fromDate || ""}
+                                    value={item?.fromDate ? format(new Date(item.fromDate), "dd-MM-yyyy") : ""}
                                     disabled
                                 />
                             </div>
@@ -211,7 +182,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={requisition.toDate || ""}
+                                    value={item?.toDate ? format(new Date(item.toDate), "dd-MM-yyyy") : ""}
                                     disabled
                                 />
                             </div>
@@ -222,7 +193,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={requisition.duration || ""}
+                                    value={item?.duration || ""}
                                     disabled
                                 />
                             </div>
@@ -436,8 +407,8 @@ const Feedback = () => {
                                     <button type="submit" className="submit">
                                         Submit Feedback
                                     </button>
-                                    <button type="button" className="back" onClick={() =>navigate(-1)} >
-                                       Back
+                                    <button type="button" className="back" onClick={() => navigate(-1)} >
+                                        Back
                                     </button>
                                 </div>
                             </Form>

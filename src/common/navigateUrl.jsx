@@ -5,6 +5,8 @@ import Dashboard from "../component/dashboard/dashboard";
 import Employee from "../component/master/Employee";
 import Designation from "../component/master/designation";
 import Division from "../component/master/division";
+import ProgramList from "../component/master/programList";
+import OrganizerList from "../component/master/organizerList";
 import UserManagerList from "../component/admin/userMangerList";
 import FormRoleAccess from "../component/admin/roleAccess";
 import Requisition from "../component/training/requisition";
@@ -114,6 +116,8 @@ function AppRoutes() {
         <Route path="/employee" element={<Employee />} />
         <Route path="/designation" element={<Designation />} />
         <Route path="/division" element={<Division />} />
+        <Route path="/program" element={<ProgramList />} />
+        <Route path="/organizer" element={<OrganizerList />} />
         <Route path="/users" element={<UserManagerList />} />
         <Route path="/roleaccess" element={<FormRoleAccess />} />
         <Route path="/calendar" element={<Calendar />} />

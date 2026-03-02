@@ -82,6 +82,35 @@ export const addProgram = async (data) => {
     }
 };
 
+export const editProgram = async (data) => {
+    try {
+        const response = await axios.put( `${API_URL}api/training/edit-program`, data, { headers: {'Content-Type': 'application/json', ...authHeader() }});
+        return response.data;
+    } catch (error) {
+        console.error("Error updating program", error);
+        return { success: false, message: "Something went wrong" };
+    }
+};
+
+export const addOrganizer = async (data) => {
+    try {
+        return (await axios.post(`${API_URL}api/training/add-organizer`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in addOrganizer():', error);
+        throw error;
+    }
+};
+
+export const editOrganizer = async (data) => {
+    try {
+        const response = await axios.put( `${API_URL}api/training/edit-organizer`, data, { headers: {'Content-Type': 'application/json', ...authHeader() }});
+        return response.data;
+    } catch (error) {
+        console.error("Error updating organizer", error);
+        return { success: false, message: "Something went wrong" };
+    }
+};
+
 export const getPrograms = async () => {
     try {
         return (await axios.get(`${API_URL}api/training/program`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
@@ -147,7 +176,7 @@ export const getRequisitionById = async (id) => {
     }
 };
 
-export const reqFileDownload = async (reqId,file) => {
+export const reqFileDownload = async (reqId, file) => {
     try {
         const response = await axios.get(
             `${API_URL}api/training/req-file/${reqId}/${file}`,

@@ -15,16 +15,16 @@ const FeedbackList = () => {
     const [feedbackList, setFeedbackList] = useState([]);
 
     useEffect(() => {
-        fetchAgencies();
+        fetchData();
     }, []);
 
-    const fetchAgencies = async () => {
+    const fetchData = async () => {
         try {
             const response = await getFeedbackList();
             setFeedbackList(response?.data || []);
         } catch (error) {
-            console.error("Error fetching requisitions:", error);
-            Swal.fire("Error", "Failed to fetch requisition data. Please try again later.", "error");
+            console.error("Error fetching feedback list:", error);
+            Swal.fire("Error", "Failed to fetch feedback data. Please try again later.", "error");
         }
     };
 
