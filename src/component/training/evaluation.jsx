@@ -212,6 +212,34 @@ const Evaluation = () => {
         }
     };
 
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisible = 5;
+
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(totalPages, start + maxVisible - 1);
+
+        if (end - start + 1 < maxVisible) {
+            start = Math.max(1, end - maxVisible + 1);
+        }
+
+        if (start > 1) {
+            pages.push(1);
+            if (start > 2) pages.push("...");
+        }
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+
+        if (end < totalPages) {
+            if (end < totalPages - 1) pages.push("...");
+            pages.push(totalPages);
+        }
+
+        return pages;
+    };
+
     return (
         <div>
             <Navbar />
@@ -288,7 +316,7 @@ const Evaluation = () => {
                     ))}
                 </div>
 
-                {totalPages && (
+                {totalPages > 1 && (
                     <div className="d-flex justify-content-end mt-4">
                         <ul className="pagination">
 
@@ -301,16 +329,16 @@ const Evaluation = () => {
                                 </button>
                             </li>
 
-                            {[...Array(totalPages)].map((_, i) => (
+                            {getPageNumbers().map((page, index) => (
                                 <li
-                                    key={i}
-                                    className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
+                                    key={index}
+                                    className={`page-item ${currentPage === page ? "active" : ""} ${page === "..." ? "disabled" : ""}`}
                                 >
                                     <button
                                         className="page-link"
-                                        onClick={() => setCurrentPage(i + 1)}
+                                        onClick={() => page !== "..." && setCurrentPage(page)}
                                     >
-                                        {i + 1}
+                                        {page}
                                     </button>
                                 </li>
                             ))}
