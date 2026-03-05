@@ -316,7 +316,7 @@ const Evaluation = () => {
                     ))}
                 </div>
 
-                {totalPages > 1 && (
+                {totalPages && (
                     <div className="d-flex justify-content-end mt-4">
                         <ul className="pagination">
 
