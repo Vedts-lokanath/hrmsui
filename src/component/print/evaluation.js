@@ -117,7 +117,7 @@ export const EvaluationPrint = (evData, empName) => {
                             {}
                         ],
                         ...(evData?.evaluation || []).map(ev => ([
-                            ev.program || "",
+                            ev.courseName || "",
                             format(new Date(ev.fromDate), "dd-MM-yyyy"),
                             format(new Date(ev.toDate), "dd-MM-yyyy"),
                             getImpactLabel(ev.impact)

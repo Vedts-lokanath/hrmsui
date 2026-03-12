@@ -4,11 +4,15 @@ import { getReqTransactionList } from '../../service/training.service';
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { FaCheckCircle } from 'react-icons/fa';
+import { FaEye } from 'react-icons/fa6';
+import { Tooltip } from 'react-tooltip';
 
 const Transaction = () => {
 
     const reqData = JSON.parse(localStorage.getItem("transactionData"));
     const [transactionDetails, setTransactionDetails] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [remarkData, setRemarkData] = useState('');
 
     useEffect(() => {
         if (reqData && reqData.requisitionId) {
@@ -77,6 +81,11 @@ const Transaction = () => {
         return <span>{count}</span>;
     };
 
+    const handleRemarkView = (item) => {
+        setShowModal(true);
+        setRemarkData(item);
+    };
+
     return (
         <>
             <Navbar />
@@ -133,7 +142,24 @@ const Transaction = () => {
                                                 </span>
                                             </div>
 
-                                            <p className="user">{step.forwardByName}</p>
+                                            <div className="d-flex align-items-center justify-content-center gap-2">
+                                                <p className="user">{step.forwardByName}</p>
+
+                                                {step.remarks && (
+                                                    <>
+                                                        <Tooltip id="Tooltip" className='text-white' />
+                                                        <button
+                                                            className="btn btn-sm btn-primary"
+                                                            data-tooltip-id="Tooltip"
+                                                            data-tooltip-content="Remarks"
+                                                            data-tooltip-place="top"
+                                                            onClick={() => handleRemarkView(step)}
+                                                        >
+                                                            <FaEye />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
 
                                             {gap !== null && (
                                                 <p className="gap">
@@ -148,6 +174,59 @@ const Transaction = () => {
                     </div>
                 </div>
             </div>
+
+            {showModal && (
+                <>
+                    <div className="modal-backdrop show custom-backdrop" onClick={() => setShowModal(false)}></div>
+                    <div className="modal d-block custom-modal" tabIndex="-1" role="dialog">
+                        <div className="modal-dialog modal-lg">
+                            <div className="modal-content shadow-lg rounded-3">
+                                <div className="modal-header custom-modal-header">
+                                    <h5 className="modal-title">Remarks Preview</h5>
+                                    <button
+                                        type="button"
+                                        className="btn-close btn-close-white"
+                                        onClick={() => setShowModal(false)}
+                                    ></button>
+                                </div>
+
+                                <div className="modal-body text-start">
+                                    <div className="row mb-3">
+                                        <div className="col-4 fw-semibold text-muted">Remark Date</div>
+                                        <div className="col-8">{format(new Date(remarkData?.actionDate), "dd-MM-yyyy hh:mm a")}</div>
+                                    </div>
+
+                                    <div className="row mb-3">
+                                        <div className="col-4 fw-semibold text-muted">Remark By</div>
+                                        <div className="col-8">{remarkData?.forwardByName}</div>
+                                    </div>
+
+                                    <div className="row">
+                                        <div className="col-4 fw-semibold text-muted">Remarks</div>
+                                        <div className="col-8">
+                                            <div className="p-2 border rounded bg-light">
+                                                {remarkData?.remarks || <span className="text-muted">No remarks</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="modal-footer">
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={() => setShowModal(false)}
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </>
+            )}
+
         </>
     );
 };

@@ -114,7 +114,7 @@ function AppRoutes() {
         <Route path="/employee" element={<Employee />} />
         <Route path="/designation" element={<Designation />} />
         <Route path="/division" element={<Division />} />
-        <Route path="/program" element={<ProgramList />} />
+        <Route path="/course" element={<ProgramList />} />
         <Route path="/organizer" element={<OrganizerList />} />
         <Route path="/users" element={<UserManagerList />} />
         <Route path="/roleaccess" element={<FormRoleAccess />} />

@@ -1,4 +1,4 @@
-import {  useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../navbar/Navbar";
 import { format } from "date-fns";
@@ -7,7 +7,7 @@ import { Form, Formik } from "formik";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { handleApiError } from "../../service/master.service";
 import Swal from "sweetalert2";
-import { requisitionFeedback } from "../../service/training.service";
+import { getFeedbackById, requisitionFeedback, updateReqFeedback } from "../../service/training.service";
 
 
 
@@ -16,6 +16,44 @@ const Feedback = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const item = location.state;
+    const [editData, setEditData] = useState(null);
+
+    
+    useEffect(() => {
+        if (item && item.feedbackId) {
+            fetchEditData(item.feedbackId);
+        }
+    }, []);
+
+    const fetchEditData = async (fid) => {
+        try {
+            const response = await getFeedbackById(fid);
+            setEditData(response?.data || null);
+        } catch (error) {
+            console.error("Error fetching feedback data:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (editData && Object.keys(editData).length > 0) {
+            setInitialValues({
+                feedbackId: editData.feedbackId,
+                requisitionId: editData.requisitionId,
+                participantId: editData.participantId,
+                facultyName: editData.facultyName,
+                facultyAddress: editData.facultyAddress,
+                remark: editData.remark,
+                course: editData.course,
+                coverage: editData.coverage,
+                duration: editData.duration,
+                faculty: editData.faculty,
+                participant: editData.participant,
+                courseVenue: editData.courseVenue,
+                quality: editData.quality,
+                seminarVenue: editData.seminarVenue,
+            });
+        }
+    }, [editData]);
 
     const [initialValues, setInitialValues] = useState({
         feedbackId: "",
@@ -33,7 +71,6 @@ const Feedback = () => {
         courseVenue: "",
         quality: "",
         seminarVenue: "",
-
     });
 
     const feedbackRows = [
@@ -69,9 +106,9 @@ const Feedback = () => {
         try {
             const dto = {
                 ...values,
-                requisitionId: item?.requisitionId || null,
+                requisitionId: item?.requisitionId || editData?.requisitionId,
                 feedbackDate: format(new Date(), "yyyy-MM-dd"),
-                participantId: item?.initiatingOfficer || null,
+                participantId: item?.initiatingOfficer || editData?.participantId,
                 facultyName: initialValues.facultyName?.trim(),
                 facultyAddress: initialValues.facultyAddress?.trim(),
                 remark: initialValues.remark?.trim(),
@@ -81,14 +118,14 @@ const Feedback = () => {
             if (!confirm) {
                 return;
             }
-            const response = await requisitionFeedback(dto);
+            const response = editData?.feedbackId ? await updateReqFeedback(dto) : await requisitionFeedback(dto);
             if (response && response.success) {
-
                 Swal.fire({
+                    icon: "success",
                     title: "Success",
                     text: response.message,
-                    icon: "success",
-                    timer: 2000,
+                    showConfirmButton: false,
+                    timer: 1500,
                 });
                 resetForm();
                 navigate("/feedback");
@@ -128,7 +165,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={item?.initiatingOfficerName || ""}
+                                    value={(item?.initiatingOfficerName || editData?.participantName) || ""}
                                     disabled
                                 />
                             </div>
@@ -138,7 +175,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={item?.empDivCode || ""}
+                                    value={(item?.empDivCode || editData?.divisionName) || ""}
                                     disabled
                                 />
                             </div>
@@ -160,7 +197,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={item?.programName || ""}
+                                    value={(item?.courseName || editData?.courseName) || ""}
                                     disabled
                                 />
                             </div>
@@ -193,7 +230,7 @@ const Feedback = () => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={item?.duration || ""}
+                                    value={(editData && editData.feedbackId ? editData?.programDuration : item?.duration) || ""}
                                     disabled
                                 />
                             </div>
@@ -264,6 +301,7 @@ const Feedback = () => {
                         initialValues={initialValues}
                         validationSchema={validationSchema}
                         onSubmit={handleFeedbackSubmit}
+                        enableReinitialize
                     >
                         {({ values, setFieldValue, errors }) => (
                             <Form>
@@ -404,8 +442,8 @@ const Feedback = () => {
 
                                 {/* Submit Button */}
                                 <div className="text-center mt-3">
-                                    <button type="submit" className="submit">
-                                        Submit Feedback
+                                    <button type="submit" className={editData?.feedbackId ? `update` : `submit`}>
+                                        {editData?.feedbackId ? "Update Feedback" : "Submit Feedback"}
                                     </button>
                                     <button type="button" className="back" onClick={() => navigate(-1)} >
                                         Back

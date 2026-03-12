@@ -129,11 +129,11 @@ export const FeedbackPrint = (reqData) => {
 
         content: [
 
-            { text: "Feedback Form", alignment: "center", bold: true, margin: [0, 5, 0, 10] },
+            { text: "Feedback Form", alignment: "center", bold: true, margin: [0, 0, 0, 10] },
 
             {
                 text: [
-                    "1. Name : ",
+                    "1. Name & Designation : ",
                     {
                         text: reqData.participantName || "",
                         decoration: "underline"
@@ -143,9 +143,9 @@ export const FeedbackPrint = (reqData) => {
             },
             {
                 text: [
-                    "2. Designation : ",
+                    "2. Division : ",
                     {
-                        text: reqData.designationPart || "",
+                        text: reqData.divisionName || "",
                         decoration: "underline"
                     }
                 ],
@@ -153,9 +153,9 @@ export const FeedbackPrint = (reqData) => {
             },
             {
                 text: [
-                    "3. Division : ",
+                    "3. Requisition Number : ",
                     {
-                        text: reqData.divisionName || "",
+                        text: reqData.requisitionNumber || "",
                         decoration: "underline"
                     }
                 ],
@@ -167,7 +167,7 @@ export const FeedbackPrint = (reqData) => {
                         text: "4. Title of course/tutorial/workshop/seminar/conference/symposium :"
                     },
                     {
-                        text: reqData.programName || "",
+                        text: reqData.courseName || "",
                         margin: [0, 3, 0, 0],
                         decoration: "underline"
                     }
@@ -257,7 +257,7 @@ export const FeedbackPrint = (reqData) => {
                         margin: [0, 30, 0, 0],
                         stack: [
                             {
-                                text: reqData.employeeName || "",
+                                text: reqData.participantName || "",
                                 bold: true,
                             },
                             {

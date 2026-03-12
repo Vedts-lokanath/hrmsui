@@ -186,6 +186,31 @@
     transform: scale(0.97);
 }
 
+.cover-letter-btn {
+    background: linear-gradient(135deg, #b664cf, #f6863b);
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+}
+
+.cover-letter-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.45);
+}
+
+.cover-letter-btn:active {
+    transform: scale(0.97);
+}
+
 /* Card */
 .approval-card {
     border-radius: 12px;

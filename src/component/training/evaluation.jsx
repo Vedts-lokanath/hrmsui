@@ -79,7 +79,7 @@ const Evaluation = () => {
 
     const fetchRequisitions = async () => {
         try {
-            const response = await getRequisitions();
+            const response = await getRequisitions(empId,roleName);
             setRequisitionList(response?.data || []);
         } catch (error) {
             console.error("Error fetching requisitions:", error);
@@ -104,7 +104,7 @@ const Evaluation = () => {
         initiator: Yup.string().notRequired(),
 
         evaluationData: Yup.object().shape({
-            program: Yup.string().required(),
+            courseName: Yup.string().required(),
             fromDate: Yup.date().nullable().required(),
             toDate: Yup.date().nullable().required(),
             impact: Yup.string().required("Impact is required")
@@ -124,6 +124,7 @@ const Evaluation = () => {
                     title: "Success",
                     text: response.message,
                     icon: "success",
+                    showConfirmButton: false,
                     timer: 2000,
                 });
                 resetForm();
@@ -164,15 +165,17 @@ const Evaluation = () => {
     );
 
     const requisitionMap = new Map();
-    (requisitionList || []).forEach(r => {
-        if (!requisitionMap.has(r.initiatingOfficer)) {
+    (requisitionList || [])
+    .filter(r => r.status === "AV")
+    .forEach(r => {
+        if (!requisitionMap.has(r.initiatingOfficer) && r.status==="AV") {
             requisitionMap.set(r.initiatingOfficer, []);
         }
 
         requisitionMap.get(r.initiatingOfficer).push({
             requisitionId: r.requisitionId,
-            programId: r.programId,
-            program: r.programName,
+            courseId: r.courseId,
+            courseName: r.courseName,
             fromDate: r.fromDate,
             toDate: r.toDate,
             impact: ""
@@ -186,13 +189,13 @@ const Evaluation = () => {
         const existEvaluation = existingEval?.evaluation || [];
 
         const existingProgramIds = new Set(
-            existEvaluation.map(p => p.programId)
+            existEvaluation.map(p => p.courseId)
         );
 
         const reqPrograms = requisitionMap.get(emp.empId) || [];
 
         const newPrograms = reqPrograms.filter(
-            p => !existingProgramIds.has(p.programId)
+            p => !existingProgramIds.has(p.courseId)
         );
 
         const mergedPrograms = [...existEvaluation, ...newPrograms]
@@ -222,7 +225,7 @@ const Evaluation = () => {
             emp.title?.toLowerCase().includes(search);
 
         const programMatch = emp.evaluation?.some((prog) =>
-            prog.program?.toLowerCase().includes(search)
+            prog.courseName?.toLowerCase().includes(search)
         );
 
         const impactMatch = emp.evaluation?.some((prog) =>
@@ -252,6 +255,14 @@ const Evaluation = () => {
                 return;
             }
 
+            if (!response.data?.evaluation || response.data.evaluation.length === 0) {
+                Swal.fire(
+                    "Evaluation Pending",
+                    "The evaluation for this record has not been completed yet.",
+                    "info"
+                );
+                return;
+            }
             const empName = formatName();
             await EvaluationPrint(response.data, empName);
 
@@ -371,7 +382,6 @@ const Evaluation = () => {
                                     <h5 className="mb-0">
                                         {emp.title} {emp.empName}, {emp.designation}
                                     </h5>
-
                                     <button
                                         className="pdf-btn"
                                         onClick={() => handlePrint(emp)}
@@ -386,7 +396,7 @@ const Evaluation = () => {
                                         <div key={i} className="program-row">
                                             <div className="program-info">
                                                 <div className="program-name text-start">
-                                                    {prog.program}
+                                                    {prog.courseName}
                                                 </div>
                                                 <div className="program-date">
                                                     {format(new Date(prog.fromDate), "dd-MM-yyyy")} <FaArrowRight className="mb-1" /> {format(new Date(prog.toDate), "dd-MM-yyyy")}
@@ -396,13 +406,20 @@ const Evaluation = () => {
                                                 <div className={`impact-badge impact-${prog.impact}`}>
                                                     {getImpactLabel(prog.impact)}
                                                 </div>
-                                            ) : (
+                                            ) : roleName === "ROLE_DH" ? (
                                                 <button
                                                     className="btn btn-sm btn-secondary"
                                                     onClick={() => handleAddImpact(emp, prog)}
                                                     title="Add Impact"
                                                 >
                                                     ADD
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="btn btn-sm btn-outline-primary"
+                                                    title="Impact yet to be filled"
+                                                >
+                                                    Pending
                                                 </button>
                                             )}
                                         </div>
@@ -503,11 +520,11 @@ const Evaluation = () => {
                                                             <div className="row mb-2 p-1 align-items-end">
 
                                                                 <div className="col-md-5">
-                                                                    <label className="form-label">Program</label>
+                                                                    <label className="form-label">Course</label>
                                                                     <input
                                                                         type="text"
                                                                         className="form-control"
-                                                                        value={values.evaluationData.program}
+                                                                        value={values.evaluationData.courseName}
                                                                         disabled
                                                                     />
                                                                 </div>

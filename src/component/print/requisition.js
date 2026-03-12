@@ -91,7 +91,7 @@ export const RequisitionPrint = (reqData) => {
                         [
                             { text: "1.", alignment: "center", bold: true },
                             { text: "Name of the Program", bold: true, alignment: "left" },
-                            { text: `${reqData.programName || ""}`, alignment: "left" }
+                            { text: `${reqData.courseName || ""}`, alignment: "left" }
                         ],
                         [
                             { text: "2.", alignment: "center", bold: true },

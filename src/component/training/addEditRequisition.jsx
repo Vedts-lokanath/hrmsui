@@ -3,7 +3,7 @@ import Navbar from "../navbar/Navbar";
 import DatePicker from "react-datepicker";
 import Select from "react-select";
 import { useEffect, useRef, useState } from "react";
-import { addProgram, addRequisitionData, getAgencies, getPrograms, getRequisitionById, reqFileDownload, updateRequisitionData } from "../../service/training.service";
+import { addProgram, addRequisitionData, getAgencies, getCourseList, getPrograms, getRequisitionById, reqFileDownload, updateRequisitionData } from "../../service/training.service";
 import Swal from "sweetalert2";
 import { getEmployees, handleApiError } from "../../service/master.service";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -26,24 +26,31 @@ const AddEditRequisition = () => {
     const [showProgramModal, setShowProgramModal] = useState(false);
     const [newProgramId, setNewProgramId] = useState(null);
     const formikRef = useRef(null);
+
     const roleName = localStorage.getItem("roleName");
     const empId = localStorage.getItem("empId");
+    const title = localStorage.getItem("title");
+    const salutation = localStorage.getItem("salutation");
+    const empName = localStorage.getItem("empName");
+    const designationCode = localStorage.getItem("designationCode");
+
     const [existingFiles, setExistingFiles] = useState({});
 
 
     const [initialValues, setInitialValues] = useState({
-        programId: "",
+        courseId: "",
         fromDate: null,
         toDate: null,
         duration: "",
         reference: "",
         organizedBy: "",
-        modeOfPayment: "Only through ECS",
+        modeOfPayment: "ECS",
         initiatingOfficer: Number(empId) || "",
         isSubmitted: "N",
         necessity: "",
         venue: "",
         registrationFee: "",
+        reason: "",
         multipartFileEcs: null,
         multipartFileCheque: null,
         multipartFilePan: null,
@@ -53,7 +60,7 @@ const AddEditRequisition = () => {
     useEffect(() => {
         fetchAgencies();
         fetchPrograms();
-        fetchEmployees();
+        // fetchEmployees();
     }, []);
 
     const fetchAgencies = async () => {
@@ -68,7 +75,7 @@ const AddEditRequisition = () => {
 
     const fetchPrograms = async () => {
         try {
-            const response = await getPrograms();
+            const response = await getCourseList(0);
             setProgramList(response?.data || []);
         } catch (error) {
             console.error("Error fetching programs:", error);
@@ -98,7 +105,7 @@ const AddEditRequisition = () => {
             if (response && response.data) {
                 const data = response.data;
                 setInitialValues({
-                    programId: data.programId || "",
+                    courseId: data.courseId || "",
                     fromDate: data.fromDate ? new Date(data.fromDate) : null,
                     toDate: data.toDate ? new Date(data.toDate) : null,
                     duration: data.duration || "",
@@ -106,10 +113,11 @@ const AddEditRequisition = () => {
                     registrationFee: data.registrationFee || "0",
                     reference: data.reference || "",
                     organizedBy: data.organizer || "",
-                    modeOfPayment: data.modeOfPayment || "Only through ECS",
+                    modeOfPayment: data.modeOfPayment || "ECS",
                     initiatingOfficer: data.initiatingOfficer || "",
                     isSubmitted: data.isSubmitted || "N",
                     necessity: data.necessity || "",
+                    reason: data.reason || "",
                     multipartFileEcs: null,
                     multipartFileCheque: null,
                     multipartFilePan: null,
@@ -167,16 +175,24 @@ const AddEditRequisition = () => {
         label: data?.organizer
     }));
 
-    const employeeOptions = employeeList.map(data => ({
-        value: data?.empId,
-        label: ((data.title || "") + ' ' + data.empName + ", " + (data.empDesigName || "")).trim(),
-    }));
+    // const employeeOptions = employeeList.map(data => ({
+    //     value: data?.empId,
+    //     label: ((data.title || "") + ' ' + data.empName + ", " + (data.empDesigName || "")).trim(),
+    // }));
+
+    const formatName = () => {
+        const cleanTitle = (title && title !== "null") ? title : (salutation && salutation !== "null") ? salutation : "";
+        const cleanName = (empName && empName !== "null") ? empName : "";
+        const cleanDesignation = (designationCode && designationCode !== "null") ? `, ${designationCode}` : "";
+
+        return `${cleanTitle} ${cleanName}`.trim() + cleanDesignation;
+    };
 
     const programOptions = [
         { value: 0, label: "Add New", data: null },
         ...programList.map((item) => ({
-            value: item.programId,
-            label: item.programName,
+            value: item.courseId,
+            label: item.courseName,
             data: item
         }))
     ];
@@ -212,7 +228,7 @@ const AddEditRequisition = () => {
             });
 
     const buildValidationSchema = (isEdit) => Yup.object().shape({
-        programId: Yup.string().required("Program is required"),
+        courseId: Yup.string().required("Course is required"),
         fromDate: Yup.date().required("From Date is required"),
         toDate: Yup.date()
             .required("To Date is required")
@@ -223,10 +239,52 @@ const AddEditRequisition = () => {
         modeOfPayment: Yup.string().trim().required("Payment Mode is required"),
         initiatingOfficer: Yup.string().required("Initiating Officer is required"),
         necessity: Yup.string().trim().required("Necessity of course is required"),
-        multipartFileEcs: isEdit ? optionalFileValidation("ECS file") : requiredFileValidation("ECS file"),
-        multipartFileCheque: isEdit ? optionalFileValidation("Blank cancelled cheque file") : requiredFileValidation("Blank cancelled cheque file"),
-        multipartFilePan: isEdit ? optionalFileValidation("PAN card file") : requiredFileValidation("PAN card file"),
-        multipartFileBrochure: isEdit ? optionalFileValidation("Brochure file") : requiredFileValidation("Brochure file"),
+        // multipartFileEcs: isEdit ? optionalFileValidation("ECS file") : requiredFileValidation("ECS file"),
+        // multipartFileCheque: isEdit ? optionalFileValidation("Blank cancelled cheque file") : requiredFileValidation("Blank cancelled cheque file"),
+        // multipartFilePan: isEdit ? optionalFileValidation("PAN card file") : requiredFileValidation("PAN card file"),
+        // multipartFileBrochure: isEdit ? optionalFileValidation("Brochure file") : requiredFileValidation("Brochure file"),
+        reason: Yup.string().when("modeOfPayment", {
+            is: "OTHERS",
+            then: (schema) => schema.required("Reason is required"),
+            otherwise: (schema) => schema.nullable()
+        }),
+
+        multipartFileEcs: Yup.mixed().when("modeOfPayment", {
+            is: "ECS",
+            then: () =>
+                isEdit
+                    ? optionalFileValidation("ECS file")
+                    : requiredFileValidation("ECS file"),
+            otherwise: (schema) => schema.nullable()
+        }),
+
+        multipartFileCheque: Yup.mixed().when("modeOfPayment", {
+            is: "ECS",
+            then: () =>
+                isEdit
+                    ? optionalFileValidation("Cheque file")
+                    : requiredFileValidation("Cheque file"),
+            otherwise: (schema) => schema.nullable()
+        }),
+
+        multipartFilePan: Yup.mixed().when("modeOfPayment", {
+            is: "ECS",
+            then: () =>
+                isEdit
+                    ? optionalFileValidation("PAN file")
+                    : requiredFileValidation("PAN file"),
+            otherwise: (schema) => schema.nullable()
+        }),
+
+        multipartFileBrochure: Yup.mixed().when("modeOfPayment", {
+            is: (value) => value === "ECS" || value === "OTHERS",
+            then: () =>
+                isEdit
+                    ? optionalFileValidation("Brochure file")
+                    : requiredFileValidation("Brochure file"),
+            otherwise: (schema) => schema.nullable()
+        })
+
     });
 
     const programSchema = Yup.object().shape({
@@ -266,7 +324,7 @@ const AddEditRequisition = () => {
             }
             const response = await addProgram(dto);
             if (response && response.success) {
-                const createdId = response.data.programId;
+                const createdId = response.data.courseId;
                 setShowProgramModal(false);
                 resetForm();
                 setNewProgramId(createdId);
@@ -284,12 +342,12 @@ const AddEditRequisition = () => {
     useEffect(() => {
         if (newProgramId && programList.length > 0 && formikRef.current) {
             const selectedProgram = programList.find(
-                item => item.programId === newProgramId
+                item => item.courseId === newProgramId
             );
             if (selectedProgram) {
                 handleChaneProgram({
-                    value: selectedProgram.programId,
-                    label: selectedProgram.programName,
+                    value: selectedProgram.courseId,
+                    label: selectedProgram.courseName,
                     data: selectedProgram
                 });
                 setNewProgramId(null);
@@ -320,12 +378,13 @@ const AddEditRequisition = () => {
         const fromDate = new Date(programData.fromDate);
         const toDate = new Date(programData.toDate);
 
-        setFieldValue("programId", selected.value);
+        setFieldValue("courseId", selected.value);
         setFieldValue("fromDate", fromDate);
         setFieldValue("toDate", toDate);
         setFieldValue("organizedBy", newOrgData ? newOrgData.organizer : "");
         setFieldValue("venue", programData ? programData.venue : "");
         setFieldValue("registrationFee", programData ? programData.registrationFee : 0);
+        setFieldValue("reference", newOrgData ? `${newOrgData.organizer} - Calendar` : "");
 
         calculateDuration(fromDate, toDate, setFieldValue);
     };
@@ -391,7 +450,8 @@ const AddEditRequisition = () => {
             </h3>
 
             <div className="p-5">
-                <div className="card p-3 mt-3 shadow-sm border-rounded">
+                <div className="text-start mb-1 me-2 text-primary fw-semibold">Participant : {formatName()}</div>
+                <div className="card p-3 shadow-sm border-rounded">
                     <Formik
                         innerRef={formikRef}
                         initialValues={initialValues}
@@ -404,17 +464,17 @@ const AddEditRequisition = () => {
                                 <div className="row g-3 custom-modal-body p-3">
 
                                     <div className="col-md-3">
-                                        <label className="form-label">Program</label>
+                                        <label className="form-label">Name of the Course</label>
                                         <div className="text-start">
                                             <Select
                                                 options={programOptions}
-                                                value={programOptions.find((item) => item.value === values.programId) || null}
+                                                value={programOptions.find((item) => item.value === values.courseId) || null}
                                                 placeholder="Select Program"
                                                 isSearchable
                                                 onChange={(selected) => handleChaneProgram(selected)}
                                             />
                                         </div>
-                                        <ErrorMessage name="programId" component="div" className="invalid-msg" />
+                                        <ErrorMessage name="courseId" component="div" className="invalid-msg" />
                                     </div>
 
                                     <div className="col-md-2">
@@ -462,8 +522,8 @@ const AddEditRequisition = () => {
                                     </div>
 
                                     <div className="col-md-2">
-                                        <label className="form-label">Duration</label>
-                                        <Field name="duration" type="text" className="form-control" placeholder="In Days" disabled />
+                                        <label className="form-label">Duration (In Days)</label>
+                                        <Field name="duration" type="text" className="form-control" placeholder="Duration" disabled />
                                         <ErrorMessage name="duration" component="div" className="invalid-msg" />
                                     </div>
 
@@ -492,12 +552,49 @@ const AddEditRequisition = () => {
                                     </div>
 
                                     <div className="col-md-3">
-                                        <label className="form-label">Payment Mode</label>
-                                        <Field name="modeOfPayment" type="text" className="form-control" />
+                                        <label className="form-label">Mode of Payment</label>
+
+                                        <div className="d-flex gap-5">
+                                            <label>
+                                                <Field
+                                                    type="radio"
+                                                    name="modeOfPayment"
+                                                    value="ECS"
+                                                    className="form-check-input me-1"
+                                                    onChange={(e) => {
+                                                        setFieldValue("modeOfPayment", "ECS");
+
+                                                        // clear others mode fields
+                                                        setFieldValue("reason", "");
+                                                        setFieldValue("multipartFileBrochure", null);
+                                                    }}
+                                                />
+                                                ECS
+                                            </label>
+
+                                            <label>
+                                                <Field
+                                                    type="radio"
+                                                    name="modeOfPayment"
+                                                    value="OTHERS"
+                                                    className="form-check-input me-1"
+                                                    onChange={(e) => {
+                                                        setFieldValue("modeOfPayment", "OTHERS");
+
+                                                        // clear ECS files
+                                                        setFieldValue("multipartFileEcs", null);
+                                                        setFieldValue("multipartFileCheque", null);
+                                                        setFieldValue("multipartFilePan", null);
+                                                    }}
+                                                />
+                                                Others
+                                            </label>
+                                        </div>
+
                                         <ErrorMessage name="modeOfPayment" component="div" className="invalid-msg" />
                                     </div>
 
-                                    <div className="col-md-4">
+                                    {/* <div className="col-md-4">
                                         <label className="form-label">Initiating Officer</label>
                                         <Select
                                             options={employeeOptions}
@@ -507,9 +604,9 @@ const AddEditRequisition = () => {
                                             isSearchable
                                         />
                                         <ErrorMessage name="initiatingOfficer" component="div" className="invalid-msg" />
-                                    </div>
+                                    </div> */}
 
-                                    <div className="col-md-8 mt-5">
+                                    <div className="col-md-8 mt-4">
                                         <span className="form-label me-3">
                                             Feedback / Impact forms / Participation certificate of previous course submitted
                                         </span>
@@ -543,65 +640,111 @@ const AddEditRequisition = () => {
 
                                 </div>
 
-                                <div className="row mt-3">
-                                    <h6 className="text-start ms-3 text-primary">Mandatory Enclosures to be Attach</h6>
+                                {values.modeOfPayment === "ECS" && (
+                                    <div className="row mt-3">
+                                        <h6 className="text-start ms-3 text-primary">Mandatory Enclosures to be Attach</h6>
 
-                                    <div className="row ms-2 mt-2 text-start">
-                                        {[
-                                            { label: "1. ECS", name: "multipartFileEcs" },
-                                            { label: "2. Blank cancelled cheque (Photo copy)", name: "multipartFileCheque" },
-                                            { label: "3. PAN card (Photo copy)", name: "multipartFilePan" },
-                                            { label: "4. Brochure", name: "multipartFileBrochure" }
-                                        ].map((item, index) => (
-                                            <div className="col-md-3 mb-3" key={index}>
-                                                <label className="form-label small fw-medium text-secondary">
-                                                    {item.label}
-                                                </label>
+                                        <div className="row ms-2 mt-2 text-start">
+                                            {[
+                                                { label: "1. ECS", name: "multipartFileEcs" },
+                                                { label: "2. Blank cancelled cheque (Photo copy)", name: "multipartFileCheque" },
+                                                { label: "3. PAN card (Photo copy)", name: "multipartFilePan" },
+                                                { label: "4. Brochure", name: "multipartFileBrochure" }
+                                            ].map((item, index) => (
+                                                <div className="col-md-3 mb-3" key={index}>
+                                                    <label className="form-label small fw-medium text-secondary">
+                                                        {item.label}
+                                                    </label>
 
-                                                <div className="border rounded p-2 bg-light">
+                                                    <div className="border rounded p-2 bg-light">
 
-                                                    {/* Existing File (Edit Mode) */}
-                                                    {requisitionId && existingFiles[item.name] && !values[item.name] && (
-                                                        <div className="d-flex justify-content-between align-items-center mb-2">
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-link text-primary p-0 small text-decoration-none"
-                                                                onClick={() => handleDownload(requisitionId, existingFiles[item.name].name)}
-                                                            >
-                                                                <BsFileEarmark className="me-1 mb-1" />
-                                                                {existingFiles[item.name].name}
-                                                            </button>
-                                                        </div>
-                                                    )}
+                                                        {/* Existing File (Edit Mode) */}
+                                                        {requisitionId && existingFiles[item.name] && !values[item.name] && (
+                                                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-link text-primary p-0 small text-decoration-none"
+                                                                    onClick={() => handleDownload(requisitionId, existingFiles[item.name].name)}
+                                                                >
+                                                                    <BsFileEarmark className="me-1 mb-1" />
+                                                                    {existingFiles[item.name].name}
+                                                                </button>
+                                                            </div>
+                                                        )}
 
-                                                    {/* Newly Selected File */}
-                                                    {values[item.name] && (
-                                                        <div className="small text-success mb-2">
-                                                            <FaCheckCircle className="me-1" />
-                                                            {values[item.name].name}
-                                                        </div>
-                                                    )}
+                                                        {/* Newly Selected File */}
+                                                        {values[item.name] && (
+                                                            <div className="small text-success mb-2">
+                                                                <FaCheckCircle className="me-1" />
+                                                                {values[item.name].name}
+                                                            </div>
+                                                        )}
 
-                                                    {/* File Input */}
-                                                    <input
-                                                        type="file"
-                                                        className="form-control form-control-sm"
-                                                        accept=".pdf,.jpg,.jpeg,.png"
-                                                        onChange={(event) => {
-                                                            const file = event.currentTarget.files?.[0] || null;
-                                                            setFieldValue(item.name, file);
-                                                        }}
-                                                        onBlur={() => setFieldTouched(item.name, true)}
-                                                        onClick={(e) => (e.target.value = null)}
-                                                    />
+                                                        {/* File Input */}
+                                                        <input
+                                                            type="file"
+                                                            className="form-control form-control-sm"
+                                                            accept=".pdf,.jpg,.jpeg,.png"
+                                                            onChange={(event) => {
+                                                                const file = event.currentTarget.files?.[0] || null;
+                                                                setFieldValue(item.name, file);
+                                                            }}
+                                                            onBlur={() => setFieldTouched(item.name, true)}
+                                                            onClick={(e) => (e.target.value = null)}
+                                                        />
 
+                                                    </div>
+
+                                                    <ErrorMessage name={item.name} component="div" className="invalid-msg" />
                                                 </div>
-
-                                                <ErrorMessage name={item.name} component="div" className="invalid-msg" />
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
+
+                                {values.modeOfPayment === "OTHERS" && (
+                                    <div className="row custom-modal-body text-start p-3">
+                                        <div className="col-md-8">
+                                            <label className="form-label">Reason</label>
+                                            <Field
+                                                name="reason"
+                                                type="text"
+                                                className="form-control"
+                                            />
+                                            <ErrorMessage name="reason" component="div" className="invalid-msg" />
+                                        </div>
+
+                                        <div className="col-md-4">
+                                            <label className="form-label small fw-medium text-secondary">Brochure Upload</label>
+                                            <div className="border rounded p-2 bg-light">
+
+                                                {requisitionId && existingFiles["multipartFileBrochure"] && !values["multipartFileBrochure"] && (
+                                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-link text-primary p-0 small text-decoration-none"
+                                                            onClick={() => handleDownload(requisitionId, existingFiles["multipartFileBrochure"].name)}
+                                                        >
+                                                            <BsFileEarmark className="me-1 mb-1" />
+                                                            {existingFiles["multipartFileBrochure"].name}
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                <input
+                                                    type="file"
+                                                    className="form-control"
+                                                    accept=".pdf,.jpg,.jpeg,.png"
+                                                    onChange={(event) => {
+                                                        const file = event.currentTarget.files?.[0] || null;
+                                                        setFieldValue("multipartFileBrochure", file);
+                                                    }}
+                                                />
+                                            </div>
+                                            <ErrorMessage name="multipartFileBrochure" component="div" className="invalid-msg" />
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="text-center mt-4">
                                     <button type="submit"

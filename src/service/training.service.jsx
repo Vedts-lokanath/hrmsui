@@ -17,7 +17,7 @@ export const getCalenderList = async (year) => {
 
 export const getAgencies = async () => {
     try {
-        return (await axios.get(`${API_URL}api/training/agency`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+        return (await axios.get(`${API_URL}api/training/organizer`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
     } catch (error) {
         console.error('Error occurred in getAgencies():', error);
         throw error;
@@ -43,10 +43,10 @@ export const addCalenderData = async (formData) => {
     }
 };
 
-export const calendarFileDownload = async (id) => {
+export const calendarFileDownload = async (id, fileType) => {
     try {
         const response = await axios.get(
-            `${API_URL}api/training/calendar-file/${id}`,
+            `${API_URL}api/training/calendar-file/${id}/${fileType}`,
             {
                 headers: authHeader(),
                 responseType: "blob"
@@ -75,7 +75,7 @@ export const calendarFileDownload = async (id) => {
 
 export const addProgram = async (data) => {
     try {
-        return (await axios.post(`${API_URL}api/training/add-program`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+        return (await axios.post(`${API_URL}api/training/add-course`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
     } catch (error) {
         console.error('Error occurred in addProgram():', error);
         throw error;
@@ -84,7 +84,7 @@ export const addProgram = async (data) => {
 
 export const editProgram = async (data) => {
     try {
-        const response = await axios.put(`${API_URL}api/training/edit-program`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } });
+        const response = await axios.put(`${API_URL}api/training/edit-course`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } });
         return response.data;
     } catch (error) {
         console.error("Error updating program", error);
@@ -111,11 +111,14 @@ export const editOrganizer = async (data) => {
     }
 };
 
-export const getPrograms = async () => {
+export const getCourseList = async (orgId) => {
     try {
-        return (await axios.get(`${API_URL}api/training/program`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+        return (await axios.get(`${API_URL}api/training/course`, {
+            params: { orgId },
+            headers: { 'Content-Type': 'application/json', ...authHeader() }
+        })).data;
     } catch (error) {
-        console.error('Error occurred in getPrograms():', error);
+        console.error('Error occurred in getCourseList():', error);
         throw error;
     }
 };
@@ -158,9 +161,12 @@ export const updateRequisitionData = async (formData) => {
     }
 };
 
-export const getRequisitions = async () => {
+export const getRequisitions = async (empId, roleName) => {
     try {
-        return (await axios.get(`${API_URL}api/training/requisition`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+        return (await axios.get(`${API_URL}api/training/requisition`, {
+            params: { empId, roleName },
+            headers: { 'Content-Type': 'application/json', ...authHeader() }
+        })).data;
     } catch (error) {
         console.error('Error occurred in getRequisitions():', error);
         throw error;
@@ -215,11 +221,50 @@ export const requisitionFeedback = async (data) => {
     }
 };
 
-export const getFeedbackList = async () => {
+export const updateReqFeedback = async (data) => {
     try {
-        return (await axios.get(`${API_URL}api/training/feedback-list`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+        return (await axios.put(`${API_URL}api/training/update-feedback`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in updateReqFeedback():', error);
+        throw error;
+    }
+};
+
+export const acceptReqFeedback = async (data) => {
+    try {
+        return (await axios.post(`${API_URL}api/training/accept-feedback`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in acceptReqFeedback():', error);
+        throw error;
+    }
+};
+
+export const getFeedbackList = async (empId, roleName) => {
+    try {
+        return (await axios.get(`${API_URL}api/training/feedback-list`, {
+            params: { empId, roleName },
+            headers: { 'Content-Type': 'application/json', ...authHeader() }
+        })).data;
     } catch (error) {
         console.error('Error occurred in getFeedbackList():', error);
+        throw error;
+    }
+};
+
+export const getFeedbackById = async (id) => {
+    try {
+        return (await axios.get(`${API_URL}api/training/feedback-data/${id}`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in getFeedbackById():', error);
+        throw error;
+    }
+};
+
+export const getFeedbackPrint = async (id) => {
+    try {
+        return (await axios.get(`${API_URL}api/training/feedback-print/${id}`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in getFeedbackPrint():', error);
         throw error;
     }
 };
@@ -233,11 +278,29 @@ export const forwardRequisition = async (data) => {
     }
 };
 
+export const revokeRequisition = async (data) => {
+    try {
+        return (await axios.post(`${API_URL}api/training/revoke-req`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in revokeRequisition():', error);
+        throw error;
+    }
+};
+
 export const recommendRequisition = async (data) => {
     try {
         return (await axios.post(`${API_URL}api/training/recommend-req`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
     } catch (error) {
         console.error('Error occurred in recommendRequisition():', error);
+        throw error;
+    }
+};
+
+export const returnRequisition = async (data) => {
+    try {
+        return (await axios.post(`${API_URL}api/training/return-req`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in returnRequisition():', error);
         throw error;
     }
 };
@@ -298,6 +361,24 @@ export const getEvaluationPrint = async (id) => {
         return (await axios.get(`${API_URL}api/training/evaluation-print/${id}`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
     } catch (error) {
         console.error('Error occurred in getEvaluationPrint():', error);
+        throw error;
+    }
+};
+
+export const getEligibilities = async () => {
+    try {
+        return (await axios.get(`${API_URL}api/training/eligibility`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in getEligibilities():', error);
+        throw error;
+    }
+};
+
+export const addEligible = async (data) => {
+    try {
+        return (await axios.post(`${API_URL}api/training/add-eligible`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in addEligible():', error);
         throw error;
     }
 };

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Datatable from "../../datatable/Datatable";
 import Navbar from "../navbar/Navbar";
-import { addProgram, editProgram, getAgencies, getPrograms } from "../../service/training.service";
+import { addEligible, addProgram, editProgram, getAgencies, getCourseList, getEligibilities } from "../../service/training.service";
 import Swal from "sweetalert2";
 import { format } from "date-fns";
 import { Tooltip } from "react-tooltip";
@@ -12,19 +12,26 @@ import Select from "react-select";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { handleApiError } from "../../service/master.service";
 import { FaEdit } from "react-icons/fa";
+import { useRef } from "react";
 
 
 const ProgramList = () => {
 
-    const [programList, setProgramList] = useState([]);
+    const [filterOrganizeList, setFilterOrganizeList] = useState([]);
+    const [eligibilityList, setEligibilityList] = useState([]);
     const [showProgramModal, setShowProgramModal] = useState(false);
+    const [showEligibleModal, setShowEligibleModal] = useState(false);
     const [agencyList, setAgencyList] = useState([]);
     const [editMode, setEditMode] = useState(false);
+    const formikRef = useRef(null);
+    const [newEligibilityId, setNewEligibilityId] = useState(null);
+    const [selectedOrgId, setselectedOrgId] = useState(0);
 
     const programFeilds = {
-        programId: "",
-        programName: "",
+        courseId: "",
+        courseName: "",
         organizerId: "",
+        eligibilityId: null,
         fromDate: null,
         toDate: null,
         registrationFee: null,
@@ -35,26 +42,52 @@ const ProgramList = () => {
     const [initialValues, setInitialValues] = useState(programFeilds);
 
     useEffect(() => {
-        fetchData();
+        fetchAgencies();
+        fetchEligibility();
     }, []);
 
-    const fetchData = async () => {
+    useEffect(() => {
+        if (selectedOrgId !== null && selectedOrgId !== undefined) {
+            fetchCourseData(selectedOrgId);
+        }
+    }, [selectedOrgId]);
+
+    const fetchCourseData = async (orgId) => {
         try {
-            const response = await getPrograms();
-            const agencyResponse = await getAgencies();
-            setProgramList(response?.data || []);
-            setAgencyList(agencyResponse?.data || []);
+            const response = await getCourseList(orgId);
+            setFilterOrganizeList(response?.data || []);
         } catch (error) {
             console.error("Error fetching programs:", error);
             Swal.fire("Error", "Failed to fetch programs data. Please try again later.", "error");
         }
     };
 
+    const fetchAgencies = async () => {
+        try {
+            const response = await getAgencies();
+            setAgencyList(response?.data || []);
+        } catch (error) {
+            console.error("Error fetching agencies:", error);
+            Swal.fire("Error", "Failed to fetch agency data. Please try again later.", "error");
+        }
+    };
+
+    const fetchEligibility = async () => {
+        try {
+            const response = await getEligibilities();
+            setEligibilityList(response?.data || []);
+        } catch (error) {
+            console.error("Error fetching eligibility:", error);
+            Swal.fire("Error", "Failed to fetch eligibility data. Please try again later.", "error");
+        }
+    };
+
     const columns = [
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
-        { name: "Program", selector: (row) => row.programName, sortable: true, align: 'text-center' },
-        { name: "Organizer", selector: (row) => row.organizer, sortable: true, align: 'text-center' },
-        { name: "venue", selector: (row) => row.venue, sortable: true, align: 'text-center' },
+        { name: "Course", selector: (row) => row.courseName, sortable: true, align: 'text-left' },
+        { name: "Organizer", selector: (row) => row.organizer, sortable: true, align: 'text-left' },
+        { name: "Venue", selector: (row) => row.venue, sortable: true, align: 'text-left' },
+        { name: "Eligibility", selector: (row) => row.eligibility, sortable: true, align: 'text-left' },
         { name: "From Date", selector: (row) => row.fromDate, sortable: true, align: 'text-center' },
         { name: "To Date", selector: (row) => row.toDate, sortable: true, align: 'text-center' },
         { name: "Registration Fee", selector: (row) => row.registrationFee, sortable: true, align: 'text-center' },
@@ -62,11 +95,12 @@ const ProgramList = () => {
     ];
 
     const mappedData = () => {
-        return programList.map((item, index) => ({
+        return filterOrganizeList.map((item, index) => ({
             sn: index + 1,
-            programName: item.programName || "-",
+            courseName: item.courseName || "-",
             organizer: item.organizer || "-",
             venue: item.venue || "-",
+            eligibility: item.eligibilityName || "-",
             fromDate: item.fromDate ? format(new Date(item.fromDate), "dd-MM-yyyy") : "-",
             toDate: item.toDate ? format(new Date(item.toDate), "dd-MM-yyyy") : "-",
             registrationFee: item.registrationFee || "-",
@@ -90,9 +124,10 @@ const ProgramList = () => {
     const handleEdit = (item) => {
         setEditMode(true);
         setInitialValues({
-            programId: item?.programId || "",
-            programName: item?.programName || "",
+            courseId: item?.courseId || "",
+            courseName: item?.courseName || "",
             organizerId: item?.organizerId || "",
+            eligibilityId: item?.eligibilityId || "",
             fromDate: item?.fromDate || null,
             toDate: item?.toDate || null,
             registrationFee: item?.registrationFee || null,
@@ -104,8 +139,9 @@ const ProgramList = () => {
     }
 
     const programSchema = Yup.object().shape({
-        programName: Yup.string().trim().required("Program Name is required"),
+        courseName: Yup.string().trim().required("Course Name is required"),
         organizerId: Yup.string().required("Organized By is required"),
+        eligibilityId: Yup.string().required("Eligibility is required"),
         fromDate: Yup.date().required("From Date is required"),
         toDate: Yup.date()
             .required("To Date is required")
@@ -128,15 +164,33 @@ const ProgramList = () => {
         label: data?.organizer
     }));
 
+    const eligibilityOptions = [
+        { value: 0, label: "Add New" },
+        ...eligibilityList.map((item) => ({
+            value: item.eligibilityId,
+            label: item.eligibilityName
+        }))
+    ];
+
+    const organizerOptions = [
+        { value: 0, label: "All" },
+        ...agencyList.map((data) => ({
+            value: data?.organizerId,
+            label: data?.organizer
+        }))
+    ];
+
+    const handleChangeOrganizer = (orgId) => {
+        setselectedOrgId(orgId);
+    };
+
+
     const handleProgramSubmit = async (values, { resetForm, setSubmitting }) => {
         try {
-            console.log("valuse", values);
             const dto = {
                 ...values,
                 registrationFee: values.isRegistration === "Y" ? values.registrationFee : 0,
             }
-
-             console.log("dto", dto);
 
             const confirm = await AlertConfirmation({ title: "Are you sure!", message: '' });
             if (!confirm) {
@@ -148,11 +202,12 @@ const ProgramList = () => {
                     title: "Success",
                     text: response.message,
                     icon: "success",
+                    showConfirmButton: false,
                     timer: 2000,
                 });
                 handleClose();
                 resetForm();
-                fetchData();
+                fetchCourseData(selectedOrgId);
             } else {
                 Swal.fire("Warning", response.message, "warning");
             }
@@ -169,20 +224,95 @@ const ProgramList = () => {
         setEditMode(false);
     }
 
+    const handleEligibleClose = () => {
+        setShowProgramModal(true);
+        setShowEligibleModal(false);
+    };
 
+    const handleChangeEligibility = (selected) => {
+        const { setFieldValue } = formikRef.current;
+        if (!selected) return;
+
+        // If Add New clicked
+        if (selected.value === 0) {
+            setShowEligibleModal(true);
+            setShowProgramModal(false);
+            return;
+        }
+        setFieldValue("eligibilityId", selected.value);
+    };
+
+    const eligibleSchema = Yup.object().shape({
+        eligibilityName: Yup.string().trim().required("Eligibility Name is required"),
+    });
+
+    const handleEligibleSubmit = async (values, { resetForm }) => {
+        try {
+            const confirm = await AlertConfirmation({ title: "Are you sure!", message: '' });
+            if (!confirm) {
+                return;
+            }
+            const response = await addEligible(values);
+            if (response && response.success) {
+                const createdId = response?.data.eligibilityId;
+                setShowProgramModal(true);
+                setShowEligibleModal(false);
+                resetForm();
+                setNewEligibilityId(createdId);
+                fetchEligibility();
+            } else {
+                Swal.fire("Warning", response.message, "warning");
+            }
+        } catch (error) {
+            Swal.fire("Warning", handleApiError(error), "warning");
+        }
+    };
+
+    useEffect(() => {
+        if (newEligibilityId && eligibilityList.length > 0 && formikRef.current) {
+            const selectedEligible = eligibilityList.find(
+                item => item.eligibilityId === newEligibilityId
+            );
+            if (selectedEligible) {
+                handleChangeEligibility({
+                    value: selectedEligible.eligibilityId,
+                    label: selectedEligible.eligibilityName,
+                });
+                setNewEligibilityId(null);
+            }
+        }
+    }, [eligibilityList, newEligibilityId]);
 
     return (
         <div>
             <Navbar />
 
             <h3 className="fancy-heading mt-3">
-                Program List
+                Course List
                 <span className="underline-glow">
                     <span className="pulse-dot"></span>
                     <span className="pulse-dot"></span>
                     <span className="pulse-dot"></span>
                 </span>
             </h3>
+
+            <div className="d-flex justify-content-end align-items-center flex-wrap">
+                <div className="d-flex align-items-center me-3 mb-2">
+                    <label className="font-label fw-bold me-3 mb-0">Organizer :</label>
+                    <div style={{ width: '400px' }} className="text-start">
+                        <Select
+                            options={organizerOptions}
+                            value={organizerOptions.find((item) => item.value === selectedOrgId) || null}
+                            onChange={(selectedOption) => {
+                                const selectedValue = selectedOption ? selectedOption.value : 0; // default to 0
+                                handleChangeOrganizer(selectedValue);
+                            }}
+                            placeholder="Select Organizer"
+                            isSearchable
+                        />
+                    </div>
+                </div>
+            </div>
 
             <div id="card-body" className="p-2 mt-2">
                 {<Datatable columns={columns} data={mappedData()} />}
@@ -203,7 +333,7 @@ const ProgramList = () => {
                             <div className="modal-content">
 
                                 <div className="modal-header custom-modal-header">
-                                    <h5 className="modal-title">{editMode ? 'Edit Program' : 'Add New Program'}</h5>
+                                    <h5 className="modal-title">{editMode ? 'Edit Course' : 'Add New Course'}</h5>
                                     <button
                                         type="button"
                                         className="btn-close"
@@ -214,6 +344,7 @@ const ProgramList = () => {
                                 <div className="modal-body custom-modal-body">
 
                                     <Formik
+                                        innerRef={formikRef}
                                         initialValues={initialValues}
                                         validationSchema={programSchema}
                                         onSubmit={handleProgramSubmit}
@@ -224,12 +355,12 @@ const ProgramList = () => {
                                                 <div className="row text-start">
 
                                                     <div className="col-md-6 mb-3">
-                                                        <label className="form-label">Program Name</label>
+                                                        <label className="form-label">Course Name</label>
                                                         <Field
-                                                            name="programName"
+                                                            name="courseName"
                                                             className="form-control"
                                                         />
-                                                        <ErrorMessage name="programName" component="div" className="invalid-msg" />
+                                                        <ErrorMessage name="courseName" component="div" className="invalid-msg" />
                                                     </div>
 
                                                     <div className="col-md-6 mb-3">
@@ -238,13 +369,13 @@ const ProgramList = () => {
                                                             options={agencyOptions}
                                                             value={agencyOptions.find((item) => item.value === Number(values.organizerId)) || null}
                                                             onChange={(option) => setFieldValue("organizerId", option ? option.value : "")}
-                                                            placeholder="Select Organize"
+                                                            placeholder="Select Organizer"
                                                             isSearchable
                                                         />
                                                         <ErrorMessage name="organizerId" component="div" className="invalid-msg" />
                                                     </div>
 
-                                                    <div className="col-md-4 mb-3">
+                                                    <div className="col-md-3 mb-3">
                                                         <label className="form-label">From Date</label>
                                                         <DatePicker
                                                             selected={values.fromDate}
@@ -261,7 +392,7 @@ const ProgramList = () => {
                                                         <ErrorMessage name="fromDate" component="div" className="invalid-msg" />
                                                     </div>
 
-                                                    <div className="col-md-4 mb-3">
+                                                    <div className="col-md-3 mb-3">
                                                         <label className="form-label">To Date</label>
                                                         <DatePicker
                                                             selected={values.toDate}
@@ -279,6 +410,22 @@ const ProgramList = () => {
                                                         <ErrorMessage name="toDate" component="div" className="invalid-msg" />
                                                     </div>
 
+                                                    <div className="col-md-6 mb-3">
+                                                        <label className="form-label">Eligibility</label>
+                                                        <Select
+                                                            options={eligibilityOptions}
+                                                            value={
+                                                                values.eligibilityId
+                                                                    ? eligibilityOptions.find((item) => item.value === Number(values.eligibilityId))
+                                                                    : null
+                                                            }
+                                                            onChange={(selected) => handleChangeEligibility(selected)}
+                                                            placeholder="Select Eligibility"
+                                                            isSearchable
+                                                        />
+                                                        <ErrorMessage name="eligibilityId" component="div" className="invalid-msg" />
+                                                    </div>
+
                                                     <div className="col-md-4 mb-3">
                                                         <label className="form-label">Registration Fee Applicable</label>
                                                         <Field className="form-control" name="isRegistration" as="select">
@@ -290,14 +437,14 @@ const ProgramList = () => {
                                                     </div>
 
                                                     {values.isRegistration === "Y" && (
-                                                        <div className="col-md-6 mb-3">
+                                                        <div className="col-md-8 mb-3">
                                                             <label className="form-label">Registration Fee (₹)</label>
                                                             <Field className="form-control" name="registrationFee" type="number" />
                                                             <ErrorMessage name="registrationFee" component="div" className="invalid-msg" />
                                                         </div>
                                                     )}
 
-                                                    <div className="col-md-6 mb-3">
+                                                    <div className="col-md-8 mb-3">
                                                         <label className="form-label">Venue</label>
                                                         <Field
                                                             name="venue"
@@ -318,6 +465,69 @@ const ProgramList = () => {
                                                         type="button"
                                                         className="back"
                                                         onClick={handleClose}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+
+                                            </Form>
+                                        )}
+                                    </Formik>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+
+            {showEligibleModal && (
+                <>
+                    <div className="modal-backdrop show custom-backdrop" onClick={handleEligibleClose}></div>
+                    <div className="modal fade show d-block" tabIndex="-1">
+                        <div className="modal-dialog modal-md">
+                            <div className="modal-content">
+
+                                <div className="modal-header custom-modal-header">
+                                    <h5 className="modal-title">Add New Eligibility</h5>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        onClick={handleEligibleClose}
+                                    ></button>
+                                </div>
+
+                                <div className="modal-body custom-modal-body">
+
+                                    <Formik
+                                        initialValues={{
+                                            eligibilityName: "",
+                                        }}
+                                        validationSchema={eligibleSchema}
+                                        onSubmit={handleEligibleSubmit}
+                                    >
+                                        {({ setFieldValue, values }) => (
+                                            <Form autoComplete="off">
+                                                <div className="row text-start">
+                                                    <div className="col-md-12 mb-3">
+                                                        <label className="form-label">Eligibility Name</label>
+                                                        <Field
+                                                            name="eligibilityName"
+                                                            className="form-control"
+                                                        />
+                                                        <ErrorMessage name="eligibilityName" component="div" className="invalid-msg" />
+                                                    </div>
+                                                </div>
+
+                                                <div className="text-center mt-2 mb-4">
+                                                    <button type="submit" className="submit">
+                                                        Submit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="back"
+                                                        onClick={handleEligibleClose}
                                                     >
                                                         Cancel
                                                     </button>

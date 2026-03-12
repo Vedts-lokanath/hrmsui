@@ -106,7 +106,6 @@ const OrganizerList = () => {
     const handleSubmit = async (values, { resetForm, setSubmitting }) => {
         try {
 
-            console.log("values", values);
             const dto = {
                 contactName:values.contactName?.trim(),
                 email:values.email?.trim(),
@@ -126,6 +125,7 @@ const OrganizerList = () => {
                     title: "Success",
                     text: response.message,
                     icon: "success",
+                    showConfirmButton: false,
                     timer: 2000,
                 });
                 handleClose();

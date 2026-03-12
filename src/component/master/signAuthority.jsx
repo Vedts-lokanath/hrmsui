@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Datatable from "../../datatable/Datatable";
-import { format } from "date-fns";
+import { addYears, format, startOfYear } from "date-fns";
 import Navbar from "../navbar/Navbar";
 import { ErrorMessage, Form, Formik } from "formik";
 import DatePicker from "react-datepicker";
@@ -20,6 +20,9 @@ const SignAuthority = () => {
     const empId = localStorage.getItem("empId");
     const [showModal, setShowModal] = useState(false);
     const [editdata, setEditData] = useState(null);
+
+    const validFromDefault = startOfYear(new Date());
+    const validUptoDefault = addYears(validFromDefault, 5);
 
     useEffect(() => {
         fetchSignAuthorityList();
@@ -77,8 +80,8 @@ const SignAuthority = () => {
         empId: "",
         signAuthRoleId: "",
         divisionId: "",
-        validFrom: "",
-        validUpto: "",
+        validFrom: validFromDefault || null,
+        validUpto: validUptoDefault || null,
         serialNo: "",
     });
 
@@ -152,8 +155,8 @@ const SignAuthority = () => {
             empId: "",
             signAuthRoleId: "",
             divisionId: "",
-            validFrom: "",
-            validUpto: "",
+            validFrom: validFromDefault || null,
+            validUpto: validUptoDefault || null,
             serialNo: "",
         });
     };
@@ -188,7 +191,13 @@ const SignAuthority = () => {
             }
             const response = editdata ? await updateSignRoleAuthority(payload) : await insertSignRoleAuthority(payload);
             if (response && response.success) {
-                Swal.fire("Success", response.message, "success");
+                Swal.fire({
+                    icon: "success",
+                    title: "Success",
+                    text: response.message,
+                    showConfirmButton: false,
+                    timer: 1500,
+                });
                 resetForm();
                 setShowModal(false);
                 fetchSignAuthorityList();

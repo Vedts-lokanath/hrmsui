@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import Datatable from "../../datatable/Datatable";
 import Navbar from "../navbar/Navbar";
 import { useNavigate } from "react-router-dom";
-import { forwardRequisition, getFeedbackList, getRequisitionPrint, getRequisitions } from "../../service/training.service";
+import { forwardRequisition, getFeedbackList, getRequisitionPrint, getRequisitions, revokeRequisition } from "../../service/training.service";
 import Swal from "sweetalert2";
 import { format } from "date-fns";
 import { Tooltip } from "react-tooltip";
 import { MdFeedback } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
 import RequisitionPrint from "../print/requisition";
-import { FaEye, FaForward } from "react-icons/fa6";
+import { FaArrowLeft, FaEye, FaForward } from "react-icons/fa6";
 import { handleApiError } from "../../service/master.service";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 
@@ -20,6 +20,7 @@ const Requisition = () => {
     const [feedbackList, setFeedbackList] = useState([]);
     const navigate = useNavigate();
     const empId = localStorage.getItem("empId");
+    const roleName = localStorage.getItem("roleName");
 
 
     useEffect(() => {
@@ -29,7 +30,7 @@ const Requisition = () => {
 
     const fetchRequisitions = async () => {
         try {
-            const response = await getRequisitions();
+            const response = await getRequisitions(empId, roleName);
             setRequisitionList(response?.data || []);
         } catch (error) {
             console.error("Error fetching requisitions:", error);
@@ -38,8 +39,20 @@ const Requisition = () => {
     };
 
     const fetchFeedbacks = async () => {
+        let apiEmpId = 0;
+        let apiRole = roleName;
+
+        if (roleName !== "ROLE_USER") {
+            apiRole = "ROLE_ADMIN";
+        }
+
+        if (roleName === "ROLE_USER") {
+            apiEmpId = empId;
+            apiRole = roleName;
+        }
+
         try {
-            const response = await getFeedbackList();
+            const response = await getFeedbackList(apiEmpId, apiRole);
             setFeedbackList(response?.data || []);
         } catch (error) {
             console.error("Error fetching requisitions:", error);
@@ -49,12 +62,12 @@ const Requisition = () => {
     const columns = [
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
         { name: "Requisition No", selector: (row) => row.requisitionNumber, sortable: true, align: 'text-left' },
-        { name: "Program", selector: (row) => row.programName, sortable: true, align: 'text-left' },
-        { name: "Organizer", selector: (row) => row.organizer, sortable: true, align: 'text-center' },
-        { name: "Duration", selector: (row) => row.duration, sortable: true, align: 'text-center' },
+        { name: "Course", selector: (row) => row.courseName, sortable: true, align: 'text-left' },
+        { name: "Organizer", selector: (row) => row.organizer, sortable: true, align: 'text-left' },
+        { name: "Duration (Day)", selector: (row) => row.duration, sortable: true, align: 'text-center' },
         { name: "From Date", selector: (row) => row.fromDate, sortable: true, align: 'text-center' },
         { name: "To Date", selector: (row) => row.toDate, sortable: true, align: 'text-center' },
-        { name: "Initiating Officer", selector: (row) => row.initiatingOfficer, sortable: true, align: 'text-left' },
+        { name: "Participant", selector: (row) => row.initiatingOfficer, sortable: true, align: 'text-left' },
         { name: "Designation", selector: (row) => row.designation, sortable: true, align: 'text-center' },
         { name: "Status", selector: (row) => row.status, sortable: true, align: 'text-left' },
         { name: "Action", selector: (row) => row.action, sortable: true, align: 'text-center' },
@@ -64,13 +77,13 @@ const Requisition = () => {
         return requisitionList.map((item, index) => {
 
             const feedbackExists = feedbackList?.some(
-                feedback => Number(feedback.requisitionId) === Number(item.requisitionId)
+                feedback => Number(feedback?.requisitionId) === Number(item?.requisitionId)
             );
 
             return {
                 sn: index + 1,
                 requisitionNumber: item.requisitionNumber || "",
-                programName: item.programName || "-",
+                courseName: item.courseName || "-",
                 organizer: item.organizer || "-",
                 duration: item.duration || "-",
                 fromDate: item.fromDate ? format(new Date(item.fromDate), "dd-MM-yyyy") : "-",
@@ -84,39 +97,52 @@ const Requisition = () => {
                     <>
                         <Tooltip id="Tooltip" className='text-white' />
 
-                        {item.status === 'AA' && (
-                            <>
-                                <button
-                                    className="btn btn-sm btn-warning me-2"
-                                    onClick={() => handleEdit(item)}
-                                    data-tooltip-id="Tooltip"
-                                    data-tooltip-content="Edit"
-                                    data-tooltip-place="top"
-                                >
-                                    <FaEdit className="fs-6" />
-                                </button>
-                                <button
-                                    className="btn btn-sm btn-primary me-2"
-                                    onClick={() => handleForward(item)}
-                                    data-tooltip-id="Tooltip"
-                                    data-tooltip-content="Forward"
-                                    data-tooltip-place="top"
-                                >
-                                    <FaForward className="fs-6" />
-                                </button>
-                            </>
+                        {(item.status === 'AA' || item.status === 'REV'
+                            || item.status === 'RR' || item.status === 'RV') && (
+                                <>
+                                    <button
+                                        className="btn btn-sm btn-warning me-2"
+                                        onClick={() => handleEdit(item)}
+                                        data-tooltip-id="Tooltip"
+                                        data-tooltip-content="Edit"
+                                        data-tooltip-place="top"
+                                    >
+                                        <FaEdit className="fs-6" />
+                                    </button>
+                                    <button
+                                        className="btn btn-sm btn-primary me-2"
+                                        onClick={() => handleForward(item)}
+                                        data-tooltip-id="Tooltip"
+                                        data-tooltip-content="Forward"
+                                        data-tooltip-place="top"
+                                    >
+                                        <FaForward className="fs-6" />
+                                    </button>
+                                </>
+                            )}
+
+                        {Number(item.initiatingOfficer) === Number(empId) && item.status === 'AF' && (
+                            <button
+                                className="btn btn-sm btn-info me-2"
+                                onClick={() => handleRevoke(item)}
+                                data-tooltip-id="Tooltip"
+                                data-tooltip-content="Revoke"
+                                data-tooltip-place="top"
+                            >
+                                <FaArrowLeft className="fs-6" />
+                            </button>
                         )}
 
                         {Number(item.initiatingOfficer) === Number(empId) &&
-                            !feedbackExists && (
+                            !feedbackExists && item.status === 'AV' && (
                                 <button
-                                    className="btn btn-sm btn-info me-2"
+                                    className="btn btn-sm btn-secondary me-2"
                                     onClick={() => handleFeedbackClick(item)}
                                     data-tooltip-id="Tooltip"
                                     data-tooltip-content="Feedback"
                                     data-tooltip-place="top"
                                 >
-                                    <MdFeedback className="fs-6 text-white" />
+                                    <MdFeedback className="fs-6" />
                                 </button>
                             )}
                         <button
@@ -136,11 +162,11 @@ const Requisition = () => {
 
     const handleView = (item) => {
         const dto = {
-            requisitionId : item.requisitionId,
-            requisitionNumber : item.requisitionNumber,
-            programName : item.programName,
-            fromDate : item.fromDate,
-            toDate : item.toDate
+            requisitionId: item.requisitionId,
+            requisitionNumber: item.requisitionNumber,
+            programName: item.programName,
+            fromDate: item.fromDate,
+            toDate: item.toDate
         }
         localStorage.setItem('transactionData', JSON.stringify(dto));
         window.open('/transaction', '_blank');
@@ -156,8 +182,8 @@ const Requisition = () => {
 
     const handleFeedbackClick = (item) => {
         navigate("/feedback-add", { state: item });
-
     }
+
     const handlePrint = async (item) => {
         const response = await getRequisitionPrint(item.requisitionId);
         await RequisitionPrint(response?.data);
@@ -170,7 +196,7 @@ const Requisition = () => {
                 actionBy: empId
             }
 
-            const confirm = await AlertConfirmation({ title: "Are you sure!", message: '' });
+            const confirm = await AlertConfirmation({ title: "Are you sure to forward!", message: '' });
             if (!confirm) {
                 return;
             }
@@ -192,8 +218,39 @@ const Requisition = () => {
         }
     };
 
-    const freeSteps = ["Created by user", "Verified by DH (SA-HRT)", "Approved by AD-HRT"];
-    const paidSteps = ["Created by user", "Verified by DH (SA-HRT)", "Checked by AD-HRT", "Recommended by Director", " Approved by DFA"];
+
+    const handleRevoke = async (item) => {
+        try {
+            const dto = {
+                ...item,
+                actionBy: empId
+            }
+
+            const confirm = await AlertConfirmation({ title: "Are you sure to revoke!", message: '' });
+            if (!confirm) {
+                return;
+            }
+            const response = await revokeRequisition(dto);
+            if (response && response.success) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Success",
+                    text: response.message,
+                    showConfirmButton: false,
+                    timer: 1500,
+                });
+                fetchRequisitions();
+            } else {
+                Swal.fire("Warning", response.message, "warning");
+            }
+        } catch (error) {
+            Swal.fire("Warning", handleApiError(error), "warning");
+        }
+    };
+
+
+    const freeSteps = ["Created by user", "Recommended by DH", "Approved by AD-HRT"];
+    const paidSteps = ["Created by user", "Submitted by user", "Forwarded by DH", "Checked by AD-HRT", "Recommended by Director", "Concurred by DFA", "Approved by Director"];
 
     return (
         <div>
@@ -234,7 +291,7 @@ const Requisition = () => {
                         <Stepper
                             title="Paid Approval Flow"
                             steps={paidSteps}
-                            currentStep={5}
+                            currentStep={7}
                         />
                     </div>
                 </div>
@@ -264,8 +321,7 @@ const Stepper = ({ title, steps, currentStep }) => {
                     return (
                         <div key={index} className="text-center flex-fill position-relative">
                             <div
-                                className={`approval-step-sm mx-auto ${isActive ? "active-step-sm" : ""
-                                    }`}
+                                className={`approval-step-sm mx-auto ${isActive ? "active-step-sm" : ""}`}
                             >
                                 {stepNumber}
                             </div>

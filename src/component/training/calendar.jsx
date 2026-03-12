@@ -12,6 +12,7 @@ import { handleApiError } from "../../service/master.service";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { format } from "date-fns";
 import { FaDownload } from "react-icons/fa6";
+import { Tooltip } from "react-tooltip";
 
 const Calendar = () => {
 
@@ -80,20 +81,19 @@ const Calendar = () => {
 
     const [initialValues, setInitialValues] = useState({
         organizerId: "",
-        trainingName: "",
         file: null,
+        coverFile: null
     });
 
     const validationSchema = Yup.object().shape({
-        organizerId: Yup.string().required("Agency is required"),
-        trainingName: Yup.string().required("Training Name is required"),
+        organizerId: Yup.string().required("Organizer is required"),
         file: Yup.mixed().required("File is required"),
+        coverFile: Yup.mixed().notRequired()
     });
 
     const columns = [
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
         { name: "Organizer", selector: (row) => row.agency, sortable: true, align: 'text-center' },
-        { name: "Training Name", selector: (row) => row.trainingName, sortable: true, align: 'text-center' },
         { name: "Uploaded Date", selector: (row) => row.uploadDate, sortable: true, align: 'text-center' },
         { name: "File", selector: (row) => row.file, sortable: true, align: 'text-center' },
     ];
@@ -101,20 +101,43 @@ const Calendar = () => {
     const mappedData = () => {
         return calendarList.map((data, index) => ({
             sn: index + 1,
-            agency: data.agency,
-            trainingName: data.trainingName,
+            agency: data.organizer,
             uploadDate: data.createdDate ? format(new Date(data.createdDate), "dd-MM-yyyy hh:mm a") : "-",
-            file: data.fileName ?
-                <button className="download-btn"
-                    onClick={() => { handleDownload(data.calendarId) }}>
-                    <FaDownload />
-                </button>
-                : "-",
+            file: (
+                <>
+                    <Tooltip id="Tooltip" className='text-white' />
+                    {data.calendarFileName && (
+                        <button
+                            className="download-btn me-2"
+                            onClick={() => handleDownload(data.calendarId, "CF")}
+                            data-tooltip-id="Tooltip"
+                            data-tooltip-content="Calendar File"
+                            data-tooltip-place="left"
+                        >
+                            <FaDownload />
+                        </button>
+                    )}
+
+                    {data.coveringLetter && (
+                        <button
+                            className="cover-letter-btn"
+                            onClick={() => handleDownload(data.calendarId, "CL")}
+                            data-tooltip-id="Tooltip"
+                            data-tooltip-content="Covering Letter"
+                            data-tooltip-place="right"
+                        >
+                            <FaDownload />
+                        </button>
+                    )}
+
+                    {!data.calendarFileName && !data.coveringLetter && "-"}
+                </>
+            ),
         }));
     }
 
-    const handleDownload = async (id) => {
-        let response = await calendarFileDownload(id);
+    const handleDownload = async (id, type) => {
+        let response = await calendarFileDownload(id, type);
 
         const { data, fileName, contentType } = response;
 
@@ -279,12 +302,13 @@ const Calendar = () => {
                                         enableReinitialize
                                         onSubmit={handleSubmit}
                                     >
-                                        {({ values, setFieldValue, isSubmitting, isValid, errors, touched, setFieldTouched, setFieldError }) => (
+                                        {({ values, setFieldValue, isSubmitting, isValid }) => (
                                             <Form autoComplete="off">
 
                                                 <div className="row g-3">
                                                     <div className="col-md-4">
                                                         <label className="form-label">Organizer</label>
+                                                        <span className="text-danger">*</span>
                                                         <Select
                                                             className="cs-select"
                                                             options={agencyOptions}
@@ -295,15 +319,15 @@ const Calendar = () => {
                                                     </div>
 
                                                     <div className="col-md-4">
-                                                        <label className="form-label">Training Name</label>
-                                                        <Field name="trainingName" type="text" className="form-control" />
-                                                        <ErrorMessage name="trainingName" component="div" className="invalid-msg" />
+                                                        <label className="form-label">Calendar File</label><span className="text-danger">*</span>
+                                                        <input name="file" type="file" className="form-control" onChange={e => setFieldValue("file", e.currentTarget.files[0])} />
+                                                        <ErrorMessage name="file" component="div" className="invalid-msg" />
                                                     </div>
 
                                                     <div className="col-md-4">
-                                                        <label className="form-label">Upload File</label>
-                                                        <input name="file" type="file" className="form-control" onChange={e => setFieldValue("file", e.currentTarget.files[0])} />
-                                                        <ErrorMessage name="file" component="div" className="invalid-msg" />
+                                                        <label className="form-label">Covering Letter</label>
+                                                        <input name="coverFile" type="file" className="form-control" onChange={e => setFieldValue("coverFile", e.currentTarget.files[0])} />
+                                                        <ErrorMessage name="coverFile" component="div" className="invalid-msg" />
                                                     </div>
                                                 </div>
 
