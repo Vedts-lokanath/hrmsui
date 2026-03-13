@@ -10,9 +10,12 @@ import { ErrorMessage, Field, Form, Formik } from "formik";
 import Swal from "sweetalert2";
 import * as Yup from "yup";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
+import { usePermission } from "../../common/usePermission";
 
 
 const UserManagerList = () => {
+
+    const { canView, canAdd, canEdit, canDelete } = usePermission("User Manager");
 
     const [roleList, setRoleList] = useState([]);
     const [userManagerList, setUserManagerList] = useState([]);
@@ -23,6 +26,7 @@ const UserManagerList = () => {
     const [editData, setEditData] = useState(null);
     const roleName = localStorage.getItem("roleName");
     const empId = localStorage.getItem("empId");
+
 
     const [initialValues, setInitialValues] = useState({
         loginId: "",
@@ -96,15 +100,17 @@ const UserManagerList = () => {
             action: (
                 <>
                     <Tooltip id="Tooltip" className='text-white' />
-                    <button
-                        className="btn btn-sm btn-warning me-2"
-                        onClick={() => { handleEdit(item.loginId) }}
-                        data-tooltip-id="Tooltip"
-                        data-tooltip-content="Edit User"
-                        data-tooltip-place="top"
-                    >
-                        <FaEdit className="fs-6" />
-                    </button>
+                    {canEdit &&
+                        <button
+                            className="btn btn-sm btn-warning me-2"
+                            onClick={() => { handleEdit(item.loginId) }}
+                            data-tooltip-id="Tooltip"
+                            data-tooltip-content="Edit User"
+                            data-tooltip-place="top"
+                        >
+                            <FaEdit className="fs-6" />
+                        </button>
+                    }
                 </>
             ),
         }))
@@ -198,6 +204,7 @@ const UserManagerList = () => {
         value: data?.empId,
         label: ((data.title || "") + ' ' + data.empName + ", " + (data.empDesigName || "")).trim(),
     }));
+
 
     return (
         <div>

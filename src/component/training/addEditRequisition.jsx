@@ -22,12 +22,10 @@ const AddEditRequisition = () => {
 
     const [agencyList, setAgencyList] = useState([]);
     const [programList, setProgramList] = useState([]);
-    const [employeeList, setEmployeeList] = useState([]);
     const [showProgramModal, setShowProgramModal] = useState(false);
     const [newProgramId, setNewProgramId] = useState(null);
     const formikRef = useRef(null);
 
-    const roleName = localStorage.getItem("roleName");
     const empId = localStorage.getItem("empId");
     const title = localStorage.getItem("title");
     const salutation = localStorage.getItem("salutation");
@@ -60,7 +58,6 @@ const AddEditRequisition = () => {
     useEffect(() => {
         fetchAgencies();
         fetchPrograms();
-        // fetchEmployees();
     }, []);
 
     const fetchAgencies = async () => {
@@ -80,16 +77,6 @@ const AddEditRequisition = () => {
         } catch (error) {
             console.error("Error fetching programs:", error);
             Swal.fire("Error", "Failed to fetch program data. Please try again later.", "error");
-        }
-    };
-
-    const fetchEmployees = async () => {
-        try {
-            const response = await getEmployees(empId, roleName);
-            setEmployeeList(response?.data || []);
-        } catch (error) {
-            console.error("Error fetching employees:", error);
-            Swal.fire("Error", "Failed to fetch employee data. Please try again later.", "error");
         }
     };
 
@@ -175,11 +162,6 @@ const AddEditRequisition = () => {
         label: data?.organizer
     }));
 
-    // const employeeOptions = employeeList.map(data => ({
-    //     value: data?.empId,
-    //     label: ((data.title || "") + ' ' + data.empName + ", " + (data.empDesigName || "")).trim(),
-    // }));
-
     const formatName = () => {
         const cleanTitle = (title && title !== "null") ? title : (salutation && salutation !== "null") ? salutation : "";
         const cleanName = (empName && empName !== "null") ? empName : "";
@@ -239,10 +221,6 @@ const AddEditRequisition = () => {
         modeOfPayment: Yup.string().trim().required("Payment Mode is required"),
         initiatingOfficer: Yup.string().required("Initiating Officer is required"),
         necessity: Yup.string().trim().required("Necessity of course is required"),
-        // multipartFileEcs: isEdit ? optionalFileValidation("ECS file") : requiredFileValidation("ECS file"),
-        // multipartFileCheque: isEdit ? optionalFileValidation("Blank cancelled cheque file") : requiredFileValidation("Blank cancelled cheque file"),
-        // multipartFilePan: isEdit ? optionalFileValidation("PAN card file") : requiredFileValidation("PAN card file"),
-        // multipartFileBrochure: isEdit ? optionalFileValidation("Brochure file") : requiredFileValidation("Brochure file"),
         reason: Yup.string().when("modeOfPayment", {
             is: "OTHERS",
             then: (schema) => schema.required("Reason is required"),

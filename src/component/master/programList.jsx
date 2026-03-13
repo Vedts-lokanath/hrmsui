@@ -13,9 +13,12 @@ import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { handleApiError } from "../../service/master.service";
 import { FaEdit } from "react-icons/fa";
 import { useRef } from "react";
+import { usePermission } from "../../common/usePermission";
 
 
 const ProgramList = () => {
+
+    const { canView, canAdd, canEdit, canDelete } = usePermission("Course");
 
     const [filterOrganizeList, setFilterOrganizeList] = useState([]);
     const [eligibilityList, setEligibilityList] = useState([]);
@@ -91,7 +94,7 @@ const ProgramList = () => {
         { name: "From Date", selector: (row) => row.fromDate, sortable: true, align: 'text-center' },
         { name: "To Date", selector: (row) => row.toDate, sortable: true, align: 'text-center' },
         { name: "Registration Fee", selector: (row) => row.registrationFee, sortable: true, align: 'text-center' },
-        { name: "Action", selector: (row) => row.action, sortable: true, align: 'text-center' },
+        ...(canEdit ? [{ name: "Action", selector: (row) => row.action, sortable: false, align: "text-center", }] : [])
     ];
 
     const mappedData = () => {
@@ -319,12 +322,15 @@ const ProgramList = () => {
             </div>
 
             <div>
-                <button
-                    className="add"
-                    onClick={() => setShowProgramModal(true)}>
-                    ADD NEW
-                </button>
+                {canAdd &&
+                    <button
+                        className="add"
+                        onClick={() => setShowProgramModal(true)}>
+                        ADD NEW
+                    </button>
+                }
             </div>
+
             {showProgramModal && (
                 <>
                     <div className="modal-backdrop show custom-backdrop" onClick={handleClose}></div>

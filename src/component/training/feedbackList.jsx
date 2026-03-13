@@ -13,9 +13,12 @@ import { getEmployees, handleApiError } from "../../service/master.service";
 import Select from "react-select";
 import { MdLibraryAddCheck } from "react-icons/md";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
+import { usePermission } from "../../common/usePermission";
 
 
 const FeedbackList = () => {
+
+    const { canView, canAdd, canEdit, canDelete } = usePermission("FeedBack");
 
     const [feedbackList, setFeedbackList] = useState([]);
     const [employeeList, setEmployeeList] = useState([]);
@@ -97,28 +100,32 @@ const FeedbackList = () => {
             action: (
                 <>
                     <Tooltip id="Tooltip" className='text-white' />
-                    {item.isAccepted === "N" &&
-                        <button
-                            className="btn btn-sm btn-warning me-2"
-                            onClick={() => handleEdit(item)}
-                            data-tooltip-id="Tooltip"
-                            data-tooltip-content="Edit"
-                            data-tooltip-place="top"
-                        >
-                            <FaEdit className="fs-6" />
-                        </button>
-                    }
-                    {["ROLE_ADMIN", "ROLE_AD_HRT", "ROLE_DH"].includes(roleName) &&
-                        item.isAccepted === "N" &&
-                        <button
-                            className="btn btn-sm btn-success me-2"
-                            onClick={() => handleAccept(item)}
-                            data-tooltip-id="Tooltip"
-                            data-tooltip-content="Accept"
-                            data-tooltip-place="top"
-                        >
-                            <MdLibraryAddCheck className="fs-6" />
-                        </button>
+                    {canEdit &&
+                        <>
+                            {item.isAccepted === "N" &&
+                                <button
+                                    className="btn btn-sm btn-warning me-2"
+                                    onClick={() => handleEdit(item)}
+                                    data-tooltip-id="Tooltip"
+                                    data-tooltip-content="Edit"
+                                    data-tooltip-place="top"
+                                >
+                                    <FaEdit className="fs-6" />
+                                </button>
+                            }
+                            {["ROLE_ADMIN", "ROLE_AD_HRT", "ROLE_DH"].includes(roleName) &&
+                                item.isAccepted === "N" &&
+                                <button
+                                    className="btn btn-sm btn-success me-2"
+                                    onClick={() => handleAccept(item)}
+                                    data-tooltip-id="Tooltip"
+                                    data-tooltip-content="Accept"
+                                    data-tooltip-place="top"
+                                >
+                                    <MdLibraryAddCheck className="fs-6" />
+                                </button>
+                            }
+                        </>
                     }
                     <button
                         className="print"

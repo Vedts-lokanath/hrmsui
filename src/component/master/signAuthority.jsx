@@ -10,8 +10,12 @@ import Swal from "sweetalert2";
 import { getEmployees, getSignAuthorityList, getSignAuthorityRoles, handleApiError, insertSignRoleAuthority, updateSignRoleAuthority } from "../../service/master.service";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { FaEdit } from "react-icons/fa";
+import { usePermission } from "../../common/usePermission";
+import { Tooltip } from "react-tooltip";
 
 const SignAuthority = () => {
+
+    const { canView, canAdd, canEdit, canDelete } = usePermission("Sign Authority");
 
     const [signAuthorityList, setSignAuthorityList] = useState([]);
     const [employeeList, setEmployeeList] = useState([]);
@@ -101,7 +105,7 @@ const SignAuthority = () => {
         { name: "Authority From", selector: (row) => row.validFrom, sortable: true, align: "text-center" },
         { name: "Authority To", selector: (row) => row.validTo, sortable: true, align: "text-center" },
         { name: "Period Status", selector: (row) => row.periodExpired, sortable: true, align: "text-center" },
-        { name: "Action", selector: (row) => row.action, sortable: false, align: "text-center" }
+        ...(canEdit ? [{ name: "Action", selector: (row) => row.action, sortable: false, align: "text-center", }] : [])
     ];
 
     const mappedData = () => {
@@ -135,9 +139,13 @@ const SignAuthority = () => {
                 ),
                 action: (
                     <>
+                        <Tooltip id="Tooltip" className='text-white' />
                         <button
                             className="btn btn-sm btn-warning me-2"
                             onClick={() => handleEdit(item)}
+                            data-tooltip-id="Tooltip"
+                            data-tooltip-content="Edit"
+                            data-tooltip-place="top"
                         >
                             <FaEdit className="fs-6" />
                         </button>
@@ -229,11 +237,13 @@ const SignAuthority = () => {
             </div>
 
             <div>
-                <button
-                    className="add"
-                    onClick={handleAdd}>
-                    ADD NEW
-                </button>
+                {canAdd &&
+                    <button
+                        className="add"
+                        onClick={handleAdd}>
+                        ADD NEW
+                    </button>
+                }
             </div>
 
             {showModal && (

@@ -12,15 +12,21 @@ import RequisitionPrint from "../print/requisition";
 import { FaArrowLeft, FaEye, FaForward } from "react-icons/fa6";
 import { handleApiError } from "../../service/master.service";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
+import { usePermission } from "../../common/usePermission";
+import RequisitionPreview from "./requisitionPreview";
 
 
 const Requisition = () => {
+
+    const { canView, canAdd, canEdit, canDelete } = usePermission("Requisition");
 
     const [requisitionList, setRequisitionList] = useState([]);
     const [feedbackList, setFeedbackList] = useState([]);
     const navigate = useNavigate();
     const empId = localStorage.getItem("empId");
     const roleName = localStorage.getItem("roleName");
+    const [showModal, setShowModal] = useState(false);
+    const [reqData, setShowReqData] = useState(null);
 
 
     useEffect(() => {
@@ -59,6 +65,17 @@ const Requisition = () => {
         }
     };
 
+
+    const getTextColor = (bg) => {
+        if (!bg) return "#000";
+        const color = bg.substring(1);
+        const r = parseInt(color.substring(0, 2), 16);
+        const g = parseInt(color.substring(2, 4), 16);
+        const b = parseInt(color.substring(4, 6), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 150 ? "#000" : "#fff";
+    };
+
     const columns = [
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
         { name: "Requisition No", selector: (row) => row.requisitionNumber, sortable: true, align: 'text-left' },
@@ -82,7 +99,14 @@ const Requisition = () => {
 
             return {
                 sn: index + 1,
-                requisitionNumber: item.requisitionNumber || "",
+                requisitionNumber: (
+                    <button
+                        className="btn btn-sm btn-outline-primary fw-semibold"
+                        onClick={() => handlePreview(item)}
+                    >
+                        {item.requisitionNumber}
+                    </button>
+                ),
                 courseName: item.courseName || "-",
                 organizer: item.organizer || "-",
                 duration: item.duration || "-",
@@ -90,62 +114,76 @@ const Requisition = () => {
                 toDate: item.toDate ? format(new Date(item.toDate), "dd-MM-yyyy") : "-",
                 initiatingOfficer: item.initiatingOfficerName || "-",
                 designation: item.empDesigName || "-",
-                status: <span className="status-badge-modern" onClick={() => handleView(item)}>
-                    {item.statusName || "Unknown"}
-                </span>,
+                status:
+                    <span
+                        className="status-badge-modern"
+                        onClick={() => handleView(item)}
+                        style={{
+                            backgroundColor: item.statusColor || "#cceaff",
+                            color: getTextColor(item.statusColor),
+                            borderColor: item.statusColor || "#dee2e6"
+                        }}
+                    >
+                        {item.statusName || "Unknown"}
+                    </span>,
                 action: (
                     <>
                         <Tooltip id="Tooltip" className='text-white' />
 
-                        {(item.status === 'AA' || item.status === 'REV'
-                            || item.status === 'RR' || item.status === 'RV') && (
-                                <>
+                        {canEdit &&
+                            <>
+                                {(item.status === 'AA' || item.status === 'REV'
+                                    || item.status === 'RR' || item.status === 'RV') && (
+                                        <>
+                                            <button
+                                                className="btn btn-sm btn-warning me-2"
+                                                onClick={() => handleEdit(item)}
+                                                data-tooltip-id="Tooltip"
+                                                data-tooltip-content="Edit"
+                                                data-tooltip-place="top"
+                                            >
+                                                <FaEdit className="fs-6" />
+                                            </button>
+                                            <button
+                                                className="btn btn-sm btn-primary me-2"
+                                                onClick={() => handleForward(item)}
+                                                data-tooltip-id="Tooltip"
+                                                data-tooltip-content="Forward"
+                                                data-tooltip-place="top"
+                                            >
+                                                <FaForward className="fs-6" />
+                                            </button>
+                                        </>
+                                    )}
+
+                                {Number(item.initiatingOfficer) === Number(empId) && item.status === 'AF' && (
                                     <button
-                                        className="btn btn-sm btn-warning me-2"
-                                        onClick={() => handleEdit(item)}
+                                        className="btn btn-sm btn-info me-2"
+                                        onClick={() => handleRevoke(item)}
                                         data-tooltip-id="Tooltip"
-                                        data-tooltip-content="Edit"
+                                        data-tooltip-content="Revoke"
                                         data-tooltip-place="top"
                                     >
-                                        <FaEdit className="fs-6" />
+                                        <FaArrowLeft className="fs-6" />
                                     </button>
-                                    <button
-                                        className="btn btn-sm btn-primary me-2"
-                                        onClick={() => handleForward(item)}
-                                        data-tooltip-id="Tooltip"
-                                        data-tooltip-content="Forward"
-                                        data-tooltip-place="top"
-                                    >
-                                        <FaForward className="fs-6" />
-                                    </button>
-                                </>
-                            )}
+                                )}
 
-                        {Number(item.initiatingOfficer) === Number(empId) && item.status === 'AF' && (
-                            <button
-                                className="btn btn-sm btn-info me-2"
-                                onClick={() => handleRevoke(item)}
-                                data-tooltip-id="Tooltip"
-                                data-tooltip-content="Revoke"
-                                data-tooltip-place="top"
-                            >
-                                <FaArrowLeft className="fs-6" />
-                            </button>
-                        )}
+                                {Number(item.initiatingOfficer) === Number(empId) &&
+                                    !feedbackExists && item.status === 'AV' && (
+                                        <button
+                                            className="btn btn-sm btn-secondary me-2"
+                                            onClick={() => handleFeedbackClick(item)}
+                                            data-tooltip-id="Tooltip"
+                                            data-tooltip-content="Feedback"
+                                            data-tooltip-place="top"
+                                        >
+                                            <MdFeedback className="fs-6" />
+                                        </button>
+                                    )}
+                            </>
+                        }
 
-                        {Number(item.initiatingOfficer) === Number(empId) &&
-                            !feedbackExists && item.status === 'AV' && (
-                                <button
-                                    className="btn btn-sm btn-secondary me-2"
-                                    onClick={() => handleFeedbackClick(item)}
-                                    data-tooltip-id="Tooltip"
-                                    data-tooltip-content="Feedback"
-                                    data-tooltip-place="top"
-                                >
-                                    <MdFeedback className="fs-6" />
-                                </button>
-                            )}
-                        <button
+                        {canView && <button
                             className="print"
                             onClick={() => handlePrint(item)}
                             data-tooltip-id="Tooltip"
@@ -154,10 +192,16 @@ const Requisition = () => {
                         >
                             <FaEye className="fs-6" />
                         </button>
+                        }
                     </>
                 )
             };
         });
+    };
+
+    const handlePreview = (item) => {
+        setShowModal(true);
+        setShowReqData(item);
     };
 
     const handleView = (item) => {
@@ -270,11 +314,12 @@ const Requisition = () => {
             </div>
 
             <div>
-                <button
+                {canAdd && <button
                     className="add"
                     onClick={handleAdd}>
                     ADD NEW
                 </button>
+                }
             </div>
 
             <div className="container-fluid mt-4">
@@ -296,6 +341,13 @@ const Requisition = () => {
                     </div>
                 </div>
             </div>
+
+            {showModal &&
+                <RequisitionPreview
+                    reqData={reqData}
+                    setShowModal={setShowModal}
+                />
+            }
 
         </div>
     )

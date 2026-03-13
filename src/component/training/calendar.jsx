@@ -13,8 +13,11 @@ import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { format } from "date-fns";
 import { FaDownload } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
+import { usePermission } from "../../common/usePermission";
 
 const Calendar = () => {
+
+    const { canView, canAdd, canEdit, canDelete } = usePermission("Calendar");
 
     const [calendarList, setCalendarList] = useState([]);
     const [agencyList, setAgencyList] = useState([]);
@@ -278,11 +281,12 @@ const Calendar = () => {
             </div>
 
             <div>
-                <button
+                {canAdd && <button
                     className="add"
                     onClick={handleAdd}>
                     ADD NEW
                 </button>
+                }
             </div>
 
             {showMoal && (

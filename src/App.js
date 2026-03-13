@@ -7,11 +7,14 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import "react-datepicker/dist/react-datepicker.css";
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import AppRoutes from './common/navigateUrl';
+import { RoleAccessProvider } from './common/RoleAccessContext';
 
 function App() {
   return (
     <div className="App hrms-font">
-      <AppRoutes />
+      <RoleAccessProvider>
+        <AppRoutes />
+      </RoleAccessProvider>
     </div>
   );
 }

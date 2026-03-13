@@ -11,6 +11,7 @@ import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { TbArrowBackUp } from "react-icons/tb";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
+import RequisitionPreview from "./requisitionPreview";
 
 
 const RequisitionApproval = () => {
@@ -19,6 +20,8 @@ const RequisitionApproval = () => {
     const employeeId = localStorage.getItem("empId");
     const [showReturnModal, setShowReutnModal] = useState(false);
     const [returnData, setReturnData] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+    const [reqData, setShowReqData] = useState(null);
 
     useEffect(() => {
         if (employeeId) {
@@ -34,6 +37,16 @@ const RequisitionApproval = () => {
             console.error("Error fetching requisitions:", error);
             Swal.fire("Error", "Failed to fetch requisition data. Please try again later.", "error");
         }
+    };
+
+    const getTextColor = (bg) => {
+        if (!bg) return "#000";
+        const color = bg.substring(1);
+        const r = parseInt(color.substring(0, 2), 16);
+        const g = parseInt(color.substring(2, 4), 16);
+        const b = parseInt(color.substring(4, 6), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 150 ? "#000" : "#fff";
     };
 
     const columns = [
@@ -53,7 +66,14 @@ const RequisitionApproval = () => {
     const mappedData = () => {
         return requisitionFwdList.map((item, index) => ({
             sn: index + 1,
-            requisitionNumber: item.requisitionNumber || "",
+            requisitionNumber: (
+                <button
+                    className="btn btn-sm btn-outline-primary fw-semibold"
+                    onClick={() => handlePreview(item)}
+                >
+                    {item.requisitionNumber}
+                </button>
+            ),
             courseName: item.courseName || "-",
             organizer: item.organizer || "-",
             duration: item.duration || "-",
@@ -61,9 +81,18 @@ const RequisitionApproval = () => {
             toDate: item.toDate ? format(new Date(item.toDate), "dd-MM-yyyy") : "-",
             forwardBy: item.forwardByName || "-",
             forwardDate: item.forwardDate ? format(new Date(item.forwardDate), "dd-MM-yyyy hh:mm a") : "-",
-            status: <span className="status-badge-modern" onClick={() => handleView(item)}>
-                {item.statusName || "Unknown"}
-            </span>,
+            status:
+                <span
+                    className="status-badge-modern"
+                    onClick={() => handleView(item)}
+                    style={{
+                        backgroundColor: item.statusColor || "#cceaff",
+                        color: getTextColor(item.statusColor),
+                        borderColor: item.statusColor || "#dee2e6"
+                    }}
+                >
+                    {item.statusName || "Unknown"}
+                </span>,
             action: (
                 <>
                     <Tooltip id="Tooltip" className='text-white' />
@@ -95,6 +124,11 @@ const RequisitionApproval = () => {
             ),
         }));
     }
+
+    const handlePreview = (item) => {
+        setShowModal(true);
+        setShowReqData(item);
+    };
 
     const handleView = (item) => {
         const dto = {
@@ -257,6 +291,13 @@ const RequisitionApproval = () => {
                     </div>
                 </>
             )}
+
+            {showModal &&
+                <RequisitionPreview
+                    reqData={reqData}
+                    setShowModal={setShowModal}
+                />
+            }
 
         </div>
     )

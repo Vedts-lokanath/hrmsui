@@ -309,3 +309,45 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
+
+.view-container {
+    padding: 5px 10px;
+}
+
+.view-field {
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.view-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6c757d;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.view-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #212529;
+    background: #e6eff8;
+    padding: 6px 10px;
+    border-radius: 7px;
+}
+
+.file-item span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.file-item .reason-text {
+    font-size: 14px;
+}
+
+.file-item .file-text {
+    font-size: 14px;
+    color: #3b82f6;
+    cursor: pointer;
+}
