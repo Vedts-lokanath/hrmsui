@@ -3,9 +3,9 @@ import Navbar from "../navbar/Navbar";
 import DatePicker from "react-datepicker";
 import Select from "react-select";
 import { useEffect, useRef, useState } from "react";
-import { addEligible, addProgram, addRequisitionData, getAgencies, getCourseList, getEligibilities, getPrograms, getRequisitionById, reqFileDownload, updateRequisitionData } from "../../service/training.service";
+import { addEligible, addProgram, addRequisitionData, getAgencies, getCourseList, getEligibilities, getRequisitionById, reqFileDownload, updateRequisitionData } from "../../service/training.service";
 import Swal from "sweetalert2";
-import { getEmployees, handleApiError } from "../../service/master.service";
+import { handleApiError } from "../../service/master.service";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { format } from "date-fns";
@@ -24,9 +24,11 @@ const AddEditRequisition = () => {
     const [programList, setProgramList] = useState([]);
     const [eligibilityList, setEligibilityList] = useState([]);
     const [showProgramModal, setShowProgramModal] = useState(false);
-    const [showEligibleModal, setShowEligibleModal] = useState(false);
     const [newEligibilityId, setNewEligibilityId] = useState(null);
     const [newProgramId, setNewProgramId] = useState(null);
+    const [showAddEligibility, setShowAddEligibility] = useState(false);
+    const [eligibilityInput, setEligibilityInput] = useState("");
+    const [eligibilityError, setEligibilityError] = useState("");
 
     const formikRef = useRef(null);
     const courseFormikRef = useRef(null);
@@ -218,36 +220,51 @@ const AddEditRequisition = () => {
         }))
     ];
 
+    const handleCourseClose = () => {
+        setShowAddEligibility(false);
+        setShowProgramModal(false);
+        setEligibilityInput("");
+        setEligibilityError("");
+    };
+
     const handleChangeEligibility = (selected) => {
         const { setFieldValue } = courseFormikRef.current;
+
         if (!selected) return;
 
-        // If Add New clicked
         if (selected.value === 0) {
-            setShowEligibleModal(true);
-            setShowProgramModal(false);
+            setShowAddEligibility(true);
+            setEligibilityInput("");
+            setEligibilityError("");
             return;
         }
+
+        setShowAddEligibility(false);
         setFieldValue("eligibilityId", selected.value);
     };
 
-    const eligibleSchema = Yup.object().shape({
-        eligibilityName: Yup.string().trim().required("Eligibility Name is required"),
-    });
+    const validateEligibility = () => {
+        if (!eligibilityInput.trim()) {
+            setEligibilityError("Eligibility Name is required");
+            return false;
+        }
+        setEligibilityError("");
+        return true;
+    };
 
-    const handleEligibleSubmit = async (values, { resetForm }) => {
+    const handleEligibleSubmit = async () => {
+        if (!validateEligibility()) return;
         try {
             const confirm = await AlertConfirmation({ title: "Are you sure!", message: '' });
-            if (!confirm) {
-                return;
-            }
-            const response = await addEligible(values);
+            if (!confirm) return;
+
+            const response = await addEligible({ eligibilityName: eligibilityInput });
             if (response && response.success) {
-                const createdId = response?.data.eligibilityId;
-                setShowProgramModal(true);
-                setShowEligibleModal(false);
-                resetForm();
-                setNewEligibilityId(createdId);
+                const newItem = response.data;
+                fetchEligibility();
+                courseFormikRef.current.setFieldValue("eligibilityId", newItem.eligibilityId);
+                setShowAddEligibility(false);
+                setEligibilityInput("");
                 fetchEligibility();
             } else {
                 Swal.fire("Warning", response.message, "warning");
@@ -255,11 +272,6 @@ const AddEditRequisition = () => {
         } catch (error) {
             Swal.fire("Warning", handleApiError(error), "warning");
         }
-    };
-
-    const handleEligibleClose = () => {
-        setShowProgramModal(true);
-        setShowEligibleModal(false);
     };
 
     useEffect(() => {
@@ -919,7 +931,7 @@ const AddEditRequisition = () => {
 
             {showProgramModal && (
                 <>
-                    <div className="modal-backdrop show custom-backdrop" onClick={() => setShowProgramModal(false)}></div>
+                    <div className="modal-backdrop show custom-backdrop" onClick={handleCourseClose}></div>
                     <div className="modal fade show d-block" tabIndex="-1">
                         <div className="modal-dialog modal-lg">
                             <div className="modal-content">
@@ -929,7 +941,7 @@ const AddEditRequisition = () => {
                                     <button
                                         type="button"
                                         className="btn-close"
-                                        onClick={() => setShowProgramModal(false)}
+                                        onClick={handleCourseClose}
                                     ></button>
                                 </div>
 
@@ -1061,6 +1073,52 @@ const AddEditRequisition = () => {
                                                         <ErrorMessage name="onlineRegistrationFee" component="div" className="invalid-msg" />
                                                     </div>
 
+                                                    {showAddEligibility && (
+                                                        <div className="col-md-12 mb-3">
+                                                            <div className="border rounded p-3 bg-light">
+
+                                                                <label className="form-label">
+                                                                    Add New Eligibility <span className="text-danger">*</span>
+                                                                </label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    className="form-control"
+                                                                    placeholder="Enter Eligibility Name"
+                                                                    value={eligibilityInput}
+                                                                    onChange={(e) => {
+                                                                        setEligibilityInput(e.target.value);
+                                                                        if (eligibilityError) setEligibilityError("");
+                                                                    }}
+                                                                />
+
+                                                                {eligibilityError && (
+                                                                    <div className="invalid-msg">{eligibilityError}</div>
+                                                                )}
+
+                                                                <div className="mt-2 d-flex gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-sm btn-success"
+                                                                        onClick={handleEligibleSubmit}
+                                                                    >
+                                                                        SAVE
+                                                                    </button>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-sm btn-secondary"
+                                                                        onClick={() => setShowAddEligibility(false)}
+                                                                    >
+                                                                        CANCEL
+                                                                    </button>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+
                                                     <div className="col-md-8 mb-3">
                                                         <label className="form-label">Venue
                                                             <span className="text-danger">*</span>
@@ -1081,7 +1139,7 @@ const AddEditRequisition = () => {
                                                     <button
                                                         type="button"
                                                         className="back"
-                                                        onClick={() => setShowProgramModal(false)}
+                                                        onClick={handleCourseClose}
                                                     >
                                                         Cancel
                                                     </button>
@@ -1097,69 +1155,6 @@ const AddEditRequisition = () => {
                     </div>
                 </>
             )}
-
-            {showEligibleModal && (
-                <>
-                    <div className="modal-backdrop show custom-backdrop" onClick={handleEligibleClose}></div>
-                    <div className="modal fade show d-block" tabIndex="-1">
-                        <div className="modal-dialog modal-md">
-                            <div className="modal-content">
-
-                                <div className="modal-header custom-modal-header">
-                                    <h5 className="modal-title">Add New Eligibility</h5>
-                                    <button
-                                        type="button"
-                                        className="btn-close"
-                                        onClick={handleEligibleClose}
-                                    ></button>
-                                </div>
-
-                                <div className="modal-body custom-modal-body">
-
-                                    <Formik
-                                        initialValues={{
-                                            eligibilityName: "",
-                                        }}
-                                        validationSchema={eligibleSchema}
-                                        onSubmit={handleEligibleSubmit}
-                                    >
-                                        {({ setFieldValue, values }) => (
-                                            <Form autoComplete="off">
-                                                <div className="row text-start">
-                                                    <div className="col-md-12 mb-3">
-                                                        <label className="form-label">Eligibility Name</label>
-                                                        <Field
-                                                            name="eligibilityName"
-                                                            className="form-control"
-                                                        />
-                                                        <ErrorMessage name="eligibilityName" component="div" className="invalid-msg" />
-                                                    </div>
-                                                </div>
-
-                                                <div className="text-center mt-2 mb-4">
-                                                    <button type="submit" className="submit">
-                                                        Submit
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        className="back"
-                                                        onClick={handleEligibleClose}
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </div>
-
-                                            </Form>
-                                        )}
-                                    </Formik>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </>
-            )}
-
 
         </div>
     );

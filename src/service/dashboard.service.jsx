@@ -27,3 +27,15 @@ export const getRequisitionDashboardCount = async (startDate, endDate) => {
         throw error;
     }
 };
+
+export const getRequisitionUserDashboardCount = async (empId, startDate, endDate) => {
+    try {
+        return (await axios.get(`${API_URL}api/dashboard/user-requisition-filter`, {
+            params: { empId, startDate, endDate },
+            headers: { 'Content-Type': 'application/json', ...authHeader() }
+        })).data;
+    } catch (error) {
+        console.error('Error occurred in getRequisitionUserDashboardCount():', error);
+        throw error;
+    }
+};
