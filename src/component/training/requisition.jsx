@@ -132,29 +132,28 @@ const Requisition = () => {
 
                         {canEdit &&
                             <>
-                                {(item.status === 'AA' || item.status === 'REV'
-                                    || item.status === 'RR' || item.status === 'RV') && (
-                                        <>
-                                            <button
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() => handleEdit(item)}
-                                                data-tooltip-id="Tooltip"
-                                                data-tooltip-content="Edit"
-                                                data-tooltip-place="top"
-                                            >
-                                                <FaEdit className="fs-6" />
-                                            </button>
-                                            <button
-                                                className="btn btn-sm btn-primary me-2"
-                                                onClick={() => handleForward(item)}
-                                                data-tooltip-id="Tooltip"
-                                                data-tooltip-content="Forward"
-                                                data-tooltip-place="top"
-                                            >
-                                                <FaForward className="fs-6" />
-                                            </button>
-                                        </>
-                                    )}
+                                {["AA", "REV", "RS", "RR", "RV", "CR"].includes(item.status) && (
+                                    <>
+                                        <button
+                                            className="btn btn-sm btn-warning me-2"
+                                            onClick={() => handleEdit(item)}
+                                            data-tooltip-id="Tooltip"
+                                            data-tooltip-content="Edit"
+                                            data-tooltip-place="top"
+                                        >
+                                            <FaEdit className="fs-6" />
+                                        </button>
+                                        <button
+                                            className="btn btn-sm btn-primary me-2"
+                                            onClick={() => handleForward(item)}
+                                            data-tooltip-id="Tooltip"
+                                            data-tooltip-content="Forward"
+                                            data-tooltip-place="top"
+                                        >
+                                            <FaForward className="fs-6" />
+                                        </button>
+                                    </>
+                                )}
 
                                 {Number(item.initiatingOfficer) === Number(empId) && item.status === 'AF' && (
                                     <button
@@ -169,7 +168,7 @@ const Requisition = () => {
                                 )}
 
                                 {Number(item.initiatingOfficer) === Number(empId) &&
-                                    !feedbackExists && item.status === 'AV' && (
+                                    !feedbackExists && (item.status === "CO" || item.status === "FA") && (
                                         <button
                                             className="btn btn-sm btn-secondary me-2"
                                             onClick={() => handleFeedbackClick(item)}
@@ -210,13 +209,74 @@ const Requisition = () => {
             requisitionNumber: item.requisitionNumber,
             programName: item.programName,
             fromDate: item.fromDate,
-            toDate: item.toDate
+            toDate: item.toDate,
+            registrationFee: item.registrationFee,
         }
         localStorage.setItem('transactionData', JSON.stringify(dto));
         window.open('/transaction', '_blank');
     }
 
     const handleAdd = () => {
+        const notApproved = [];
+        const feedbackMissing = [];
+
+        requisitionList.forEach(item => {
+            if (Number(item.initiatingOfficer) !== Number(empId)) return;
+
+            const feedbackExists = feedbackList?.some(
+                feedback => Number(feedback?.requisitionId) === Number(item?.requisitionId)
+            );
+
+            // Case 1: Status validation
+            if (!(item.status === "CO" || item.status === "FA")) {
+                notApproved.push(item.requisitionNumber);
+            }
+            // Case 2: Feedback validation
+            else if (!feedbackExists) {
+                feedbackMissing.push(item.requisitionNumber);
+            }
+        });
+
+        if (notApproved.length > 0 || feedbackMissing.length > 0) {
+            Swal.fire({
+                title: "Action Required",
+                icon: "info", // "info" or "warning" looks more professional
+                html: `
+                <div style="text-align: left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6;">
+                    <p style="color: #555;">To proceed with adding a new entry, please ensure all your previous requisitions are finalized:</p>
+                    
+                    ${notApproved.length > 0 ? `
+                        <div style="margin-top: 15px; border-left: 4px solid #f39c12; padding-left: 10px;">
+                            <strong style="color: #e67e22;">Pending Approval</strong>
+                            <p style="font-size: 0.85rem; margin: 0; color: #666;">These require approval of director:</p>
+                            <div style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 5px;">
+                                ${notApproved.map(req => `<span style="background: #fef5e7; border: 1px solid #f39c12; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${req}</span>`).join("")}
+                            </div>
+                        </div>
+                    ` : ""}
+
+                    ${feedbackMissing.length > 0 ? `
+                        <div style="margin-top: 15px; border-left: 4px solid #3498db; padding-left: 10px;">
+                            <strong style="color: #2980b9;">Feedback Required</strong>
+                            <p style="font-size: 0.85rem; margin: 0; color: #666;">Please submit feedback for these approved requisitions:</p>
+                            <div style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 5px;">
+                                ${feedbackMissing.map(req => `<span style="background: #ebf5fb; border: 1px solid #3498db; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${req}</span>`).join("")}
+                            </div>
+                        </div>
+                    ` : ""}
+                </div>
+            `,
+                showCloseButton: true,
+                confirmButtonText: "OK",
+                confirmButtonColor: "#3085d6",
+                customClass: {
+                    container: 'my-swal-container'
+                }
+            });
+
+            return;
+        }
+
         navigate("/req-add-edit");
     };
 
@@ -292,10 +352,6 @@ const Requisition = () => {
         }
     };
 
-
-    const freeSteps = ["Created by user", "Recommended by DH", "Approved by AD-HRT"];
-    const paidSteps = ["Created by user", "Submitted by user", "Forwarded by DH", "Checked by AD-HRT", "Recommended by Director", "Concurred by DFA", "Approved by Director"];
-
     return (
         <div>
             <Navbar />
@@ -322,26 +378,6 @@ const Requisition = () => {
                 }
             </div>
 
-            <div className="container-fluid mt-4">
-                <div className="row g-4">
-                    <div className="col-md-5">
-                        <Stepper
-                            title="Free Approval Flow"
-                            steps={freeSteps}
-                            currentStep={3}
-                        />
-                    </div>
-
-                    <div className="col-md-7">
-                        <Stepper
-                            title="Paid Approval Flow"
-                            steps={paidSteps}
-                            currentStep={7}
-                        />
-                    </div>
-                </div>
-            </div>
-
             {showModal &&
                 <RequisitionPreview
                     reqData={reqData}
@@ -354,41 +390,3 @@ const Requisition = () => {
 }
 
 export default Requisition;
-
-const Stepper = ({ title, steps, currentStep }) => {
-    return (
-        <div className="card approval-card p-3 h-100">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="mb-0 approval-title">{title}</h6>
-                <span className="badge bg-light text-dark small">
-                    Step {currentStep}/{steps.length}
-                </span>
-            </div>
-
-            <div className="d-flex justify-content-between position-relative approval-wrapper">
-                {steps.map((step, index) => {
-                    const stepNumber = index + 1;
-                    const isActive = stepNumber <= currentStep;
-
-                    return (
-                        <div key={index} className="text-center flex-fill position-relative">
-                            <div
-                                className={`approval-step-sm mx-auto ${isActive ? "active-step-sm" : ""}`}
-                            >
-                                {stepNumber}
-                            </div>
-                            <div className="step-label">{step}</div>
-                        </div>
-                    );
-                })}
-
-                <div
-                    className="approval-progress-sm"
-                    style={{
-                        width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
-                    }}
-                />
-            </div>
-        </div>
-    );
-};

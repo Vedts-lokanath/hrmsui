@@ -26,6 +26,7 @@ const AllReportsTemplate = () => {
         report.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+
     return (
         <>
             <Navbar />

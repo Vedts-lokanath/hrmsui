@@ -8,6 +8,7 @@ import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { handleApiError } from "../../service/master.service";
 import Swal from "sweetalert2";
 import { getFeedbackById, requisitionFeedback, updateReqFeedback } from "../../service/training.service";
+import { BsFileEarmark } from "react-icons/bs";
 
 
 
@@ -17,8 +18,10 @@ const Feedback = () => {
     const navigate = useNavigate();
     const item = location.state;
     const [editData, setEditData] = useState(null);
+    const [certificateFile, setCertificateFile] = useState(null);
+    const [invoiceFile, setInvoiceFile] = useState(null);
 
-    
+
     useEffect(() => {
         if (item && item.feedbackId) {
             fetchEditData(item.feedbackId);
@@ -104,6 +107,12 @@ const Feedback = () => {
 
     const handleFeedbackSubmit = async (values, { resetForm, setSubmitting }) => {
         try {
+
+            if (!certificateFile && !editData?.certificate) {
+                Swal.fire("Warning", "Please upload the certificate file.", "warning");
+                return;
+            }
+
             const dto = {
                 ...values,
                 requisitionId: item?.requisitionId || editData?.requisitionId,
@@ -112,6 +121,8 @@ const Feedback = () => {
                 facultyName: initialValues.facultyName?.trim(),
                 facultyAddress: initialValues.facultyAddress?.trim(),
                 remark: initialValues.remark?.trim(),
+                certificateFile,
+                invoiceFile,
             };
 
             const confirm = await AlertConfirmation({ title: "Are you sure!", message: '' });
@@ -158,7 +169,7 @@ const Feedback = () => {
 
                     <div className="card-body custom-modal-body">
 
-                        <div className="row g-2">
+                        <div className="row g-3">
 
                             <div className="col-md-3">
                                 <label className="form-label fw-semibold">Name</label>
@@ -291,6 +302,64 @@ const Feedback = () => {
                                 />
                             </div>
 
+                            <div className="col-md-4">
+                                <label className="form-label fw-semibold">Certificate</label>
+                                <div className="border rounded p-2 bg-light">
+
+                                    {editData && editData.certificate && (
+                                        <div className="d-flex justify-content-between align-items-center mb-2">
+                                            <button
+                                                type="button"
+                                                className="btn btn-link text-primary p-0 small text-decoration-none"
+
+                                            >
+                                                <BsFileEarmark className="me-1 mb-1" />
+                                                {editData.certificate}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    <input
+                                        type="file"
+                                        className="form-control"
+                                        accept=".pdf,.jpg,.jpeg,.png"
+                                        onChange={(event) => {
+                                            const file = event.currentTarget.files?.[0] || null;
+                                            setCertificateFile(file);
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="col-md-4">
+                                <label className="form-label fw-semibold">Invoice/Other Documents</label>
+                                <div className="border rounded p-2 bg-light">
+
+                                    {editData && editData.invoice && (
+                                        <div className="d-flex justify-content-between align-items-center mb-2">
+                                            <button
+                                                type="button"
+                                                className="btn btn-link text-primary p-0 small text-decoration-none"
+
+                                            >
+                                                <BsFileEarmark className="me-1 mb-1" />
+                                                {editData.invoice}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    <input
+                                        type="file"
+                                        className="form-control"
+                                        accept=".pdf,.jpg,.jpeg,.png"
+                                        onChange={(event) => {
+                                            const file = event.currentTarget.files?.[0] || null;
+                                            setInvoiceFile(file);
+                                        }}
+                                    />
+                                </div>
+                                <span className="text-muted small">Note : Original shall be submitted to O/o HRT for payment processing.</span>
+                            </div>
 
                         </div>
                     </div>

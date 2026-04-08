@@ -17,6 +17,48 @@ export const RequisitionPrint = (reqData) => {
 
     const isApproved = !!reqData?.approvedDate;
 
+    const drawBox = (type) => {
+        return {
+            stack: [
+                {
+                    canvas: [
+                        {
+                            type: 'rect',
+                            x: 0,
+                            y: 0,
+                            w: 12,
+                            h: 12,
+                            lineWidth: 1
+                        }
+                    ]
+                },
+                type
+                    ? {
+                        text: type === 'yes' ? '√' : 'X',
+                        fontSize: 11,
+                        margin: [2, -12, 0, 0] // IMPORTANT: pulls symbol into box
+                    }
+                    : {}
+            ],
+            width: 12
+        };
+    };
+
+    const getYesNo = (val) => {
+        const checked = val && val.trim() !== "";
+
+        return {
+            columns: [
+                drawBox(checked ? 'yes' : null),
+                { text: ' Yes', margin: [3, 0, 5, 0] },
+
+                drawBox(!checked ? 'no' : null),
+                { text: ' No', margin: [3, 0, 0, 0] }
+            ],
+            columnGap: 2
+        };
+    };
+
     const docDefinition = {
         pageSize: "A4",
         pageMargins: [35, 120, 40, 60],
@@ -68,17 +110,29 @@ export const RequisitionPrint = (reqData) => {
         },
 
         content: [
+            // {
+            //     margin: [0, 0, 0, 0],
+            //     table: {
+            //         widths: [100, 140, 100, 150],
+            //         body: [
+            //             [
+            //                 { text: "Division / Group", bold: true },
+            //                 { text: reqData.empDivCode || "", alignment: 'left' },
+            //                 { text: "Requisition No", bold: true },
+            //                 { text: reqData.requisitionNumber || "", alignment: 'left' }
+            //             ]
+            //         ]
+            //     }
+            // },
             {
                 margin: [0, 0, 0, 0],
                 table: {
-                    widths: [100, 140, 100, 150],
+                    widths: [120, 385],
                     body: [
                         [
-                            { text: "Division / Group", bold: true },
-                            { text: reqData.empDivCode || "", alignment: 'left' },
-                            { text: "Requisition No", bold: true },
-                            { text: reqData.requisitionNumber || "", alignment: 'left' }
-                        ]
+                            { text: "Division / Group", bold: true, },
+                            { text: reqData.empDivCode || "", alignment: 'left' }
+                        ],
                     ]
                 }
             },
@@ -278,7 +332,7 @@ export const RequisitionPrint = (reqData) => {
             },
             {
                 table: {
-                    widths: [300, 100],
+                    widths: [300, 150],
                     body: [
                         [
                             {
@@ -287,7 +341,7 @@ export const RequisitionPrint = (reqData) => {
                                 border: [false, false, false, false]
                             },
                             {
-                                text: reqData.fileEcs && reqData.fileEcs.trim() !== "" ? "Yes" : "No",
+                                stack: [getYesNo(reqData.fileEcs)],
                                 border: [false, false, false, false]
                             }
                         ],
@@ -298,30 +352,32 @@ export const RequisitionPrint = (reqData) => {
                                 border: [false, false, false, false]
                             },
                             {
-                                text: reqData.fileCheque && reqData.fileCheque.trim() !== "" ? "Yes" : "No",
+                                stack: [getYesNo(reqData.fileCheque)],
                                 border: [false, false, false, false]
                             }
-                        ], [
+                        ],
+                        [
                             {
                                 text: "3. PAN Card (photo card) :",
                                 margin: [40, 5, 0, 3],
                                 border: [false, false, false, false]
                             },
                             {
-                                text: reqData.filePan && reqData.filePan.trim() !== "" ? "Yes" : "No",
+                                stack: [getYesNo(reqData.filePan)],
                                 border: [false, false, false, false]
                             }
-                        ], [
+                        ],
+                        [
                             {
                                 text: "4. Brochure :",
                                 margin: [40, 5, 0, 3],
                                 border: [false, false, false, false]
                             },
                             {
-                                text: reqData.fileBrochure && reqData.fileBrochure.trim() !== "" ? "Yes" : "No",
+                                stack: [getYesNo(reqData.fileBrochure)],
                                 border: [false, false, false, false]
                             }
-                        ],
+                        ]
                     ]
                 }
             },
@@ -374,46 +430,46 @@ export const RequisitionPrint = (reqData) => {
                     ]
                 }
             },
-            {
-                margin: [0, 60, 0, 0],
-                columns: [
-                    {
-                        alignment: "left",
-                        stack: [
-                            {
-                                text: formatDateTime(reqData?.forwardDate),
-                                bold: true,
-                                color: "#0d47a1",
-                                fontSize: 11
-                            },
-                            {
-                                text: "Date",
-                                margin: [0, 5, 0, 0]
-                            }
-                        ]
-                    },
-                    {
-                        alignment: "right",
-                        stack: [
-                            {
-                                text: (reqData?.initiatingOfficerName + ", " + reqData?.empDesigName) || "",
-                                bold: true,
-                                color: "#0d47a1",
-                                fontSize: 11
-                            },
-                            {
-                                text: "Initiating Officer",
-                                margin: [0, 5, 0, 0]
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                canvas: [
-                    { type: 'line', x1: 0, y1: 0, x2: 520, y2: 0, lineWidth: 1 }
-                ]
-            },
+            // {
+            //     margin: [0, 60, 0, 0],
+            //     columns: [
+            //         {
+            //             alignment: "left",
+            //             stack: [
+            //                 {
+            //                     text: formatDateTime(reqData?.forwardDate),
+            //                     bold: true,
+            //                     color: "#0d47a1",
+            //                     fontSize: 11
+            //                 },
+            //                 {
+            //                     text: "Date",
+            //                     margin: [0, 5, 0, 0]
+            //                 }
+            //             ]
+            //         },
+            //         {
+            //             alignment: "right",
+            //             stack: [
+            //                 {
+            //                     text: (reqData?.initiatingOfficerName + ", " + reqData?.empDesigName) || "",
+            //                     bold: true,
+            //                     color: "#0d47a1",
+            //                     fontSize: 11
+            //                 },
+            //                 {
+            //                     text: "Initiating Officer",
+            //                     margin: [0, 5, 0, 0]
+            //                 }
+            //             ]
+            //         }
+            //     ]
+            // },
+            // {
+            //     canvas: [
+            //         { type: 'line', x1: 0, y1: 0, x2: 520, y2: 0, lineWidth: 1 }
+            //     ]
+            // },
             {
                 margin: [0, 50, 0, 0],
                 columns: [
@@ -473,37 +529,53 @@ export const RequisitionPrint = (reqData) => {
                         ]
                     },
                     {
-                        width: 150,
+                        width: 220,
                         alignment: "center",
-                        columns: isApproved
-                            ? [
-                                {
-                                    canvas: [
-                                        { type: 'rect', x: 0, y: 0, w: 10, h: 10 },
-                                        { type: 'line', x1: 1, y1: 5, x2: 4, y2: 9 },
-                                        { type: 'line', x1: 4, y1: 9, x2: 9, y2: 1 }
-                                    ],
-                                    width: 10
-                                },
-                                {
-                                    text: "Approved",
-                                    margin: [0, 0, 25, 0]
-                                }
-                            ]
-                            : [
-                                {
-                                    canvas: [
-                                        { type: 'rect', x: 0, y: 0, w: 10, h: 10 },
-                                        { type: 'line', x1: 1, y1: 1, x2: 9, y2: 9 },
-                                        { type: 'line', x1: 9, y1: 1, x2: 1, y2: 9 }
-                                    ],
-                                    width: 15
-                                },
-                                {
-                                    text: "Not Approved",
-                                    margin: [0, 0, 0, 0]
-                                }
-                            ]
+                        columns: [
+                            // Approved
+                            {
+                                margin: [-70, 0, 0, 0],
+                                columns: [
+                                    {
+                                        canvas: [
+                                            { type: 'rect', x: 0, y: 0, w: 12, h: 12 }, // bigger box
+                                            ...(isApproved ? [
+                                                { type: 'line', x1: 2, y1: 6, x2: 5, y2: 10, lineWidth: 1.5 },
+                                                { type: 'line', x1: 5, y1: 10, x2: 10, y2: 2, lineWidth: 1.5 }
+                                            ] : [])
+                                        ],
+                                        margin: [0, 2, -55, 0] // spacing around box
+                                    },
+                                    {
+                                        text: "Approved",
+                                        margin: [0, 2, 0, 0],
+                                        fontSize: 10,
+                                    }
+                                ]
+                            },
+
+                            // Not Approved
+                            {
+                                margin: [-130, 0, 0, 0],
+                                columns: [
+                                    {
+                                        canvas: [
+                                            { type: 'rect', x: 0, y: 0, w: 12, h: 12 },
+                                            ...(!isApproved ? [
+                                                { type: 'line', x1: 2, y1: 2, x2: 10, y2: 10, lineWidth: 1.5 },
+                                                { type: 'line', x1: 10, y1: 2, x2: 2, y2: 10, lineWidth: 1.5 }
+                                            ] : [])
+                                        ],
+                                        margin: [0, 2, -75, 0]
+                                    },
+                                    {
+                                        text: "Not Approved",
+                                        margin: [0, 2, 0, 0],
+                                        fontSize: 10,
+                                    }
+                                ]
+                            }
+                        ]
                     },
                     {
                         alignment: "right",

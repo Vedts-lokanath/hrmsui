@@ -27,8 +27,8 @@ const FormRoleAccess = () => {
       const rolesListResponse = await getRolesList();
       const rolesArr = Array.isArray(rolesListResponse)
         ? rolesListResponse
-        : Array.isArray(rolesListResponse?.data)
-          ? rolesListResponse.data
+        : Array.isArray(rolesListResponse)
+          ? rolesListResponse
           : [];
       setRolesList(rolesArr);
       const formModulesList = await getFormModulesList();

@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { FaCheckCircle } from 'react-icons/fa';
 import { FaEye } from 'react-icons/fa6';
 import { Tooltip } from 'react-tooltip';
+import TrainingStepper from '../training/trainingStepper';
 
 const Transaction = () => {
 
@@ -86,9 +87,87 @@ const Transaction = () => {
         setRemarkData(item);
     };
 
+    const freeSteps = [
+        { code: "AA", label: "Created by user" },
+        { code: "AR", label: "Recommended by DH" },
+        { code: "AS", label: "Verified By SA-HRT" },
+        { code: "AV", label: "Approved by AD-HRT" },
+        { code: "CO", label: "Approved By Director" }
+    ];
+
+    const paidBaseSteps = [
+        { code: "AA", label: "Created by user" },
+        { code: "AR", label: "Recommended by DH" },
+        { code: "AS", label: "Verified By SA-HRT" },
+        { code: "CA", label: "Checked By CAG" },
+        { code: "AV", label: "Approved by AD-HRT" },
+        { code: "CO", label: "Approved By Director" }
+    ];
+
+    const financeSteps = [
+        { code: "AA", label: "Created by user" },
+        { code: "AR", label: "Recommended by DH" },
+        { code: "AS", label: "Verified By SA-HRT" },
+        { code: "CA", label: "Checked By CAG" },
+        { code: "AV", label: "Approved by AD-HRT" },
+        { code: "DA", label: "Approved By Director" },
+        { code: "FC", label: "Financial Concurrence By DFA" },
+        { code: "FA", label: "Final Approved By Director" }
+    ];
+
+    const prepareStepper = (transactions = [], registrationFee) => {
+        // create status map
+        const statusMap = {};
+        transactions.forEach((t) => {
+            statusMap[t.statusCode] = t;
+        });
+
+        let steps = [];
+
+        // FREE TRAINING
+        if (registrationFee === 0) {
+            steps = [...freeSteps];
+        }
+
+        // PAID TRAINING
+        else {
+
+            steps = [...paidBaseSteps];
+
+            // check if FC exists in transaction
+            const hasFinance = transactions.some(
+                (t) => t.statusCode === "DA" || t.statusCode === "FC" || t.statusCode === "FA"
+            );
+
+            if (hasFinance) {
+                steps = [...financeSteps];
+            }
+        }
+
+        // attach color + completed
+        const finalSteps = steps.map((step) => {
+
+            const txn = statusMap[step.code];
+
+            return {
+                ...step,
+                completed: !!txn,
+                colorCode: txn ? txn.colorCode : null
+            };
+        });
+
+        return finalSteps;
+    };
+
+    const steps = prepareStepper(
+        transactionDetails,
+        reqData?.registrationFee
+    );
+
+
     return (
         <>
-            <Navbar />
+            {/* <Navbar /> */}
             <div className="container mt-4">
                 <div className="row justify-content-center">
 
@@ -98,11 +177,22 @@ const Transaction = () => {
                         </h5>
 
                         {reqData?.fromDate && reqData?.toDate && (
-                            <p className="transaction-date">
+                            <p className="transaction-date mb-1">
                                 {format(new Date(reqData.fromDate), "dd MMM yyyy")} —{" "}
                                 {format(new Date(reqData.toDate), "dd MMM yyyy")}
                             </p>
                         )}
+                    </div>
+
+                    <div className="col-12 mb-1">
+                        <TrainingStepper
+                            title={
+                                reqData?.registrationFee === 0
+                                    ? "Free Training : Approval Flow"
+                                    : "Paid Training : Approval Flow"
+                            }
+                            steps={steps}
+                        />
                     </div>
 
                     <div className="col-md-8 col-lg-11">
@@ -117,7 +207,7 @@ const Transaction = () => {
                                 const isCurrent = index === transactionDetails.length - 1;
                                 return (
                                     <div
-                                        key={step.id}
+                                        key={step.transactionId}
                                         className={`timeline-item ${index % 2 === 0 ? "left" : "right"} ${step.statusCode}`}
                                         style={{ animationDelay: `${index * 0.2}s` }}
                                     >

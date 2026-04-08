@@ -3,7 +3,7 @@ import Navbar from "../navbar/Navbar";
 import DatePicker from "react-datepicker";
 import Select from "react-select";
 import { useEffect, useRef, useState } from "react";
-import { addEligible, addProgram, addRequisitionData, getAgencies, getCourseList, getEligibilities, getRequisitionById, reqFileDownload, updateRequisitionData } from "../../service/training.service";
+import { addEligible, addProgram, addRequisitionData, getAgencies, getCourseList, getCourseTypeList, getEligibilities, getRequisitionById, reqFileDownload, updateRequisitionData } from "../../service/training.service";
 import Swal from "sweetalert2";
 import { handleApiError } from "../../service/master.service";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -42,6 +42,7 @@ const AddEditRequisition = () => {
     const [existingFiles, setExistingFiles] = useState({});
     const [feeOptions, setFeeOptions] = useState([]);
     const [reqNo, setReqNo] = useState(null);
+    const [courseTypeList, setCourseTypeList] = useState([]);
 
     const [initialValues, setInitialValues] = useState({
         courseId: "",
@@ -67,6 +68,7 @@ const AddEditRequisition = () => {
         fetchAgencies();
         fetchPrograms();
         fetchEligibility();
+        fetchCourseType();
     }, []);
 
     const fetchAgencies = async () => {
@@ -98,11 +100,23 @@ const AddEditRequisition = () => {
         }
     };
 
+    const fetchCourseType = async () => {
+        try {
+            const response = await getCourseTypeList();
+            setCourseTypeList(response?.data || []);
+        } catch (error) {
+            console.error("Error fetching course type:", error);
+            Swal.fire("Error", "Failed to fetch course type data. Please try again later.", "error");
+        }
+    };
+
+
     useEffect(() => {
         if (requisitionId) {
             fetchRequisitionById(requisitionId);
         }
     }, [requisitionId]);
+
 
     const fetchRequisitionById = async (id) => {
         try {
@@ -381,6 +395,8 @@ const AddEditRequisition = () => {
 
     const programSchema = Yup.object().shape({
         courseName: Yup.string().trim().required("Course Name is required"),
+        courseTypeId: Yup.string().required("Course Type is required"),
+        courseLevel: Yup.string().required("Course Preference is required"),
         courseCode: Yup.string().trim().notRequired(),
         organizerId: Yup.string().required("Organized By is required"),
         eligibilityId: Yup.string().required("Eligibility is required"),
@@ -401,6 +417,9 @@ const AddEditRequisition = () => {
             .nullable()
             .transform((value, originalValue) => originalValue === "" ? null : value),
         venue: Yup.string().trim().required("Venue is required"),
+        noOfNomination: Yup.string()
+            .required("No of Nomination is required")
+            .min(0, "Nomination cannot be negative"),
     });
 
     const handleProgramSubmit = async (values, { resetForm, setSubmitting }) => {
@@ -515,6 +534,7 @@ const AddEditRequisition = () => {
             const dto = {
                 ...values,
                 registrationFee: values.offlineRegistrationFee,
+                requisitionNumber: reqNo,
                 fromDate: format(new Date(values.fromDate), "yyyy-MM-dd"),
                 toDate: format(new Date(values.toDate), "yyyy-MM-dd"),
                 requisitionId: requisitionId || null,
@@ -544,6 +564,16 @@ const AddEditRequisition = () => {
             setSubmitting(false);
         }
     };
+
+    const courseTypeOptions = courseTypeList.map(data => ({
+        value: data?.courseTypeId,
+        label: data?.courseType
+    }));
+
+    const courseLevelOptions = [
+        { value: "National", label: "National" },
+        { value: "International", label: "International" },
+    ];
 
     return (
         <div>
@@ -761,7 +791,7 @@ const AddEditRequisition = () => {
                                         />
                                         <ErrorMessage name="initiatingOfficer" component="div" className="invalid-msg" />
                                     </div> */}
-{/* 
+                                    {/* 
                                     {values.offlineRegistrationFee > 30000 &&
                                         <>
                                             <div className="col-md-4 mt-4">
@@ -972,6 +1002,8 @@ const AddEditRequisition = () => {
                                         innerRef={courseFormikRef}
                                         initialValues={{
                                             courseCode: "",
+                                            courseTypeId: "",
+                                            courseLevel: "",
                                             courseName: "",
                                             organizerId: "",
                                             fromDate: null,
@@ -980,6 +1012,7 @@ const AddEditRequisition = () => {
                                             offlineRegistrationFee: 0,
                                             onlineRegistrationFee: null,
                                             venue: "",
+                                            noOfNomination: 0,
                                         }}
                                         validationSchema={programSchema}
                                         onSubmit={handleProgramSubmit}
@@ -996,6 +1029,30 @@ const AddEditRequisition = () => {
                                                             className="form-control"
                                                         />
                                                         <ErrorMessage name="courseCode" component="div" className="invalid-msg" />
+                                                    </div>
+
+                                                    <div className="col-md-4 mb-3">
+                                                        <label className="form-label">Course Type</label>
+                                                        <span className="text-danger">*</span>
+                                                        <Select
+                                                            className="cs-select"
+                                                            options={courseTypeOptions}
+                                                            value={courseTypeOptions.find(o => o.value === values.courseTypeId)}
+                                                            onChange={o => setFieldValue("courseTypeId", o?.value || "")}
+                                                        />
+                                                        <ErrorMessage name="courseTypeId" component="div" className="invalid-msg" />
+                                                    </div>
+
+                                                    <div className="col-md-4 mb-3">
+                                                        <label className="form-label">Course Preference</label>
+                                                        <span className="text-danger">*</span>
+                                                        <Select
+                                                            className="cs-select"
+                                                            options={courseLevelOptions}
+                                                            value={courseLevelOptions.find(o => o.value === values.courseLevel)}
+                                                            onChange={o => setFieldValue("courseLevel", o?.value || "")}
+                                                        />
+                                                        <ErrorMessage name="courseLevel" component="div" className="invalid-msg" />
                                                     </div>
 
                                                     <div className="col-md-8 mb-3">
@@ -1021,6 +1078,24 @@ const AddEditRequisition = () => {
                                                             isSearchable
                                                         />
                                                         <ErrorMessage name="organizerId" component="div" className="invalid-msg" />
+                                                    </div>
+
+                                                    <div className="col-md-4 mb-3">
+                                                        <label className="form-label">Eligibility
+                                                            <span className="text-danger">*</span>
+                                                        </label>
+                                                        <Select
+                                                            options={eligibilityOptions}
+                                                            value={
+                                                                values.eligibilityId
+                                                                    ? eligibilityOptions.find((item) => item.value === Number(values.eligibilityId))
+                                                                    : null
+                                                            }
+                                                            onChange={(selected) => handleChangeEligibility(selected)}
+                                                            placeholder="Select Eligibility"
+                                                            isSearchable
+                                                        />
+                                                        <ErrorMessage name="eligibilityId" component="div" className="invalid-msg" />
                                                     </div>
 
                                                     <div className="col-md-4 mb-3">
@@ -1062,37 +1137,6 @@ const AddEditRequisition = () => {
                                                         <ErrorMessage name="toDate" component="div" className="invalid-msg" />
                                                     </div>
 
-                                                    <div className="col-md-4 mb-3">
-                                                        <label className="form-label">Eligibility
-                                                            <span className="text-danger">*</span>
-                                                        </label>
-                                                        <Select
-                                                            options={eligibilityOptions}
-                                                            value={
-                                                                values.eligibilityId
-                                                                    ? eligibilityOptions.find((item) => item.value === Number(values.eligibilityId))
-                                                                    : null
-                                                            }
-                                                            onChange={(selected) => handleChangeEligibility(selected)}
-                                                            placeholder="Select Eligibility"
-                                                            isSearchable
-                                                        />
-                                                        <ErrorMessage name="eligibilityId" component="div" className="invalid-msg" />
-                                                    </div>
-
-                                                    <div className="col-md-4 mb-3">
-                                                        <label className="form-label">Offline RE Fee (₹)
-                                                            <span className="text-danger">*</span>
-                                                        </label>
-                                                        <Field className="form-control" name="offlineRegistrationFee" type="number" />
-                                                        <ErrorMessage name="offlineRegistrationFee" component="div" className="invalid-msg" />
-                                                    </div>
-
-                                                    <div className="col-md-4 mb-3">
-                                                        <label className="form-label">Online RE Fee (₹)</label>
-                                                        <Field className="form-control" name="onlineRegistrationFee" type="number" />
-                                                        <ErrorMessage name="onlineRegistrationFee" component="div" className="invalid-msg" />
-                                                    </div>
 
                                                     {showAddEligibility && (
                                                         <div className="col-md-12 mb-3">
@@ -1139,6 +1183,25 @@ const AddEditRequisition = () => {
                                                         </div>
                                                     )}
 
+                                                    <div className="col-md-4 mb-3">
+                                                        <label className="form-label">Offline RE Fee (₹)
+                                                            <span className="text-danger">*</span>
+                                                        </label>
+                                                        <Field className="form-control" name="offlineRegistrationFee" type="number" />
+                                                        <ErrorMessage name="offlineRegistrationFee" component="div" className="invalid-msg" />
+                                                    </div>
+
+                                                    <div className="col-md-4 mb-3">
+                                                        <label className="form-label">Online RE Fee (₹)</label>
+                                                        <Field className="form-control" name="onlineRegistrationFee" type="number" />
+                                                        <ErrorMessage name="onlineRegistrationFee" component="div" className="invalid-msg" />
+                                                    </div>
+
+                                                    <div className="col-md-4 mb-3">
+                                                        <label className="form-label">No of Nomination</label>
+                                                        <Field className="form-control" name="noOfNomination" type="number" />
+                                                        <ErrorMessage name="noOfNomination" component="div" className="invalid-msg" />
+                                                    </div>
 
                                                     <div className="col-md-8 mb-3">
                                                         <label className="form-label">Venue

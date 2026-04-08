@@ -54,7 +54,7 @@ const UserManagerList = () => {
     const fetchFormRoleList = async () => {
         try {
             const roleList = await getRolesList();
-            setRoleList(roleList?.data || []);
+            setRoleList(roleList || []);
         } catch (error) {
             console.error("Error occured in role list");
         }
@@ -84,7 +84,7 @@ const UserManagerList = () => {
     const columns = [
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
         { name: "User Name", selector: (row) => row.username, sortable: true, align: 'text-center' },
-        { name: "Employee Name", selector: (row) => row.employee, sortable: true, align: 'text-center' },
+        { name: "Employee Name", selector: (row) => row.employee, sortable: true, align: 'text-start' },
         { name: 'Role Name', selector: (row) => row.rolename, sortable: true, grow: 2, align: 'text-center' },
         { name: "Division", selector: (row) => row.division, sortable: true, align: 'text-center' },
         { name: "Action", selector: (row) => row.action, sortable: true, align: 'text-center' },

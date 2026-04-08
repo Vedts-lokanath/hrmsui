@@ -96,7 +96,7 @@ const RequisitionApproval = () => {
             action: (
                 <>
                     <Tooltip id="Tooltip" className='text-white' />
-                    {(item.status === 'AF' || item.status === 'AR') && (
+                    {["AF", "SF", "AR", "AS", "CA"].includes(item.status) && (
                         <>
                             <button
                                 className="btn btn-sm btn-success me-2"
@@ -136,7 +136,8 @@ const RequisitionApproval = () => {
             requisitionNumber: item.requisitionNumber,
             courseName: item.courseName,
             fromDate: item.fromDate,
-            toDate: item.toDate
+            toDate: item.toDate,
+            registrationFee: item.registrationFee,
         }
         localStorage.setItem('transactionData', JSON.stringify(dto));
         window.open('/transaction', '_blank');

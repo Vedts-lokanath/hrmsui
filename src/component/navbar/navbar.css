@@ -117,7 +117,7 @@
 }
 
 .dropdown {
-    margin-right: 15px;
+    margin-right: 3px;
     font-size: 17px;
 }
 
@@ -216,7 +216,7 @@
     border-radius: 12px;
     background: #ffffff;
     border: 1px solid #f1f3f5;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 10px rgb(75 75 75 / 22%);
     transition: all 0.3s ease;
     min-height: 140px;
 }
@@ -235,7 +235,7 @@
 /* Wrapper */
 .approval-wrapper {
     align-items: center;
-    padding-top: 10px;
+    padding-top: 0px;
 }
 
 .approval-wrapper::before {
@@ -251,12 +251,12 @@
 }
 
 /* Progress */
-.approval-progress-sm {
+.approval-progress {
     position: absolute;
     top: 16px;
     left: 0;
     height: 3px;
-    background: linear-gradient(90deg, #4c6ef5, #15aabf);
+    background: linear-gradient(90deg, #27b900, #15aabf);
     z-index: 1;
     border-radius: 3px;
     transition: width 0.5s ease-in-out;
@@ -288,8 +288,8 @@
 /* Label */
 .step-label {
     margin-top: 6px;
-    font-size: 0.7rem;
-    font-weight: 500;
+    font-size: 0.8rem;
+    font-weight: 600;
     color: #495057;
 }
 
@@ -350,4 +350,8 @@
     font-size: 14px;
     color: #3b82f6;
     cursor: pointer;
+}
+
+.btn-fixed-300 {
+    width: 300px;
 }

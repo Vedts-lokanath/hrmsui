@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import Datatable from "../../datatable/Datatable";
 import Navbar from "../navbar/Navbar";
 import { useNavigate } from "react-router-dom";
-import { acceptReqFeedback, getFeedbackList, getFeedbackPrint } from "../../service/training.service";
+import { acceptReqFeedback, feedbackFileDownload, getFeedbackList, getFeedbackPrint } from "../../service/training.service";
 import Swal from "sweetalert2";
 import { format } from "date-fns";
 import { Tooltip } from "react-tooltip";
 import FeedbackPrint from "../print/feedbackPrint";
-import { FaEye } from "react-icons/fa6";
+import { FaDownload, FaEye } from "react-icons/fa6";
 import { FaEdit } from "react-icons/fa";
 import { getEmployees, handleApiError } from "../../service/master.service";
 import Select from "react-select";
@@ -113,7 +113,7 @@ const FeedbackList = () => {
                                     <FaEdit className="fs-6" />
                                 </button>
                             }
-                            {["ROLE_ADMIN", "ROLE_AD_HRT", "ROLE_DH"].includes(roleName) &&
+                            {["ROLE_ADMIN", "ROLE_AD_HRT", "ROLE_DH", "ROLE_DIRECTOR", "ROLE_SA_HRT"].includes(roleName) &&
                                 item.isAccepted === "N" &&
                                 <button
                                     className="btn btn-sm btn-success me-2"
@@ -128,7 +128,7 @@ const FeedbackList = () => {
                         </>
                     }
                     <button
-                        className="print"
+                        className="print me-2"
                         onClick={() => handlePrint(item)}
                         data-tooltip-id="Tooltip"
                         data-tooltip-content="Print"
@@ -136,10 +136,58 @@ const FeedbackList = () => {
                     >
                         <FaEye className="fs-6" />
                     </button>
+                    {item.certificate &&
+                        <button
+                            className="btn btn-sm btn-primary me-2"
+                            onClick={() => handleDownload(item.feedbackId, 'certificate')}
+                            data-tooltip-id="Tooltip"
+                            data-tooltip-content="Certificate"
+                            data-tooltip-place="top"
+                        >
+                            <FaDownload className="fs-6" />
+                        </button>
+                    }
+                    {item.invoice &&
+                        <button
+                            className="btn btn-sm btn-secondary"
+                            onClick={() => handleDownload(item.feedbackId, 'invoice')}
+                            data-tooltip-id="Tooltip"
+                            data-tooltip-content="Invoice"
+                            data-tooltip-place="top"
+                        >
+                            <FaDownload className="fs-6" />
+                        </button>
+                    }
                 </>
             )
         }));
     }
+
+    const handleDownload = async (feedId, type) => {
+
+        let response = await feedbackFileDownload(feedId, type);
+        const { data, fileName, contentType } = response;
+        if (data === '0') {
+            Swal.fire("Error", "File not found", "error");
+            return;
+        }
+
+        const blob = new Blob([data], { type: contentType });
+        if (contentType === "application/pdf") {
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, "_blank");
+        } else {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        }
+    };
+
 
     const handlePrint = async (item) => {
         try {

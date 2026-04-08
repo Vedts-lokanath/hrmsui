@@ -123,6 +123,17 @@ export const getCourseList = async (orgId) => {
     }
 };
 
+export const getCourseTypeList = async () => {
+    try {
+        return (await axios.get(`${API_URL}api/training/course-type`, {
+            headers: { 'Content-Type': 'application/json', ...authHeader() }
+        })).data;
+    } catch (error) {
+        console.error('Error occurred in getCourseTypeList():', error);
+        throw error;
+    }
+};
+
 export const addRequisitionData = async (formData) => {
     try {
         const response = await axios.post(
@@ -214,7 +225,7 @@ export const reqFileDownload = async (reqId, file) => {
 
 export const requisitionFeedback = async (data) => {
     try {
-        return (await axios.post(`${API_URL}api/training/requisition-feedback`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+        return (await axios.post(`${API_URL}api/training/requisition-feedback`, data, { headers: { 'Content-Type': 'multipart/form-data', ...authHeader() } })).data;
     } catch (error) {
         console.error('Error occurred in requisitionFeedback():', error);
         throw error;
@@ -223,7 +234,7 @@ export const requisitionFeedback = async (data) => {
 
 export const updateReqFeedback = async (data) => {
     try {
-        return (await axios.put(`${API_URL}api/training/update-feedback`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+        return (await axios.put(`${API_URL}api/training/update-feedback`, data, { headers: { 'Content-Type': 'multipart/form-data', ...authHeader() } })).data;
     } catch (error) {
         console.error('Error occurred in updateReqFeedback():', error);
         throw error;
@@ -388,6 +399,73 @@ export const updateEligible = async (data) => {
         return (await axios.put(`${API_URL}api/training/update-eligible`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
     } catch (error) {
         console.error('Error occurred in updateEligible():', error);
+        throw error;
+    }
+};
+
+export const feedbackFileDownload = async (feedId, type) => {
+    try {
+        const response = await axios.get(
+            `${API_URL}api/training/feedback-file/${feedId}/${type}`,
+            {
+                headers: authHeader(),
+                responseType: "blob"
+            }
+        );
+        const contentDisposition = response.headers["content-disposition"];
+        let fileName = type;
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?(.+?)"?$/);
+            if (match) {
+                fileName = match[1];
+            }
+        }
+        return {
+            data: response.data,
+            fileName,
+            contentType: response.headers["content-type"]
+        };
+    } catch (error) {
+        return { data: '0' };
+    }
+};
+
+
+export const getReqApprovedList = async () => {
+    try {
+        return (await axios.get(`${API_URL}api/training/req-approved-list`, {
+            params: { roleName: localStorage.getItem("roleName") },
+            headers: { 'Content-Type': 'application/json', ...authHeader() }
+        })).data;
+    } catch (error) {
+        console.error('Error occurred in getReqApprovedList():', error);
+        throw error;
+    }
+};
+
+export const forwardToDirector = async (data) => {
+    try {
+        return (await axios.post(`${API_URL}api/training/forward-director`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in forwardToDirector():', error);
+        throw error;
+    }
+};
+
+export const approveRequisition = async (data) => {
+    try {
+        return (await axios.post(`${API_URL}api/training/approve-req`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in approveRequisition():', error);
+        throw error;
+    }
+};
+
+export const recommendToDFA = async (data) => {
+    try {
+        return (await axios.post(`${API_URL}api/training/recommend-dfa`, data, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
+    } catch (error) {
+        console.error('Error occurred in recommendToDFA():', error);
         throw error;
     }
 };

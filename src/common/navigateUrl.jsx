@@ -27,6 +27,7 @@ import AllReportsTemplate from "../component/reports/AllReportsTemplate.jsx";
 import HigherDegreeMtech from "../component/sponsorship/higherDegreeMtech.jsx";
 import HigherDegreePhD from "../component/sponsorship/higherDegreePhD.jsx";
 import HigherDegreeAddEdit from "../component/sponsorship/higherDegreeAddEdit.jsx";
+import RequisitionApprovedList from "../component/approval/requisitionApprovedList.jsx";
 
 function AppRoutes() {
 
@@ -137,6 +138,7 @@ function AppRoutes() {
         <Route path="/degree-mtech" element={<HigherDegreeMtech />} />
         <Route path="/degree-phd" element={<HigherDegreePhD />} />
         <Route path="/higherDegree-add" element={<HigherDegreeAddEdit />} />
+        <Route path="/req-approved-list" element={<RequisitionApprovedList />} />
       </Routes>
 
     </>

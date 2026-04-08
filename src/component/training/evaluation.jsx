@@ -79,7 +79,7 @@ const Evaluation = () => {
 
     const fetchRequisitions = async () => {
         try {
-            const response = await getRequisitions(empId,roleName);
+            const response = await getRequisitions(empId, roleName);
             setRequisitionList(response?.data || []);
         } catch (error) {
             console.error("Error fetching requisitions:", error);
@@ -166,21 +166,21 @@ const Evaluation = () => {
 
     const requisitionMap = new Map();
     (requisitionList || [])
-    .filter(r => r.status === "AV")
-    .forEach(r => {
-        if (!requisitionMap.has(r.initiatingOfficer) && r.status==="AV") {
-            requisitionMap.set(r.initiatingOfficer, []);
-        }
+        .filter(r => r.status === "AV")
+        .forEach(r => {
+            if (!requisitionMap.has(r.initiatingOfficer) && r.status === "AV") {
+                requisitionMap.set(r.initiatingOfficer, []);
+            }
 
-        requisitionMap.get(r.initiatingOfficer).push({
-            requisitionId: r.requisitionId,
-            courseId: r.courseId,
-            courseName: r.courseName,
-            fromDate: r.fromDate,
-            toDate: r.toDate,
-            impact: ""
+            requisitionMap.get(r.initiatingOfficer).push({
+                requisitionId: r.requisitionId,
+                courseId: r.courseId,
+                courseName: r.courseName,
+                fromDate: r.fromDate,
+                toDate: r.toDate,
+                impact: ""
+            });
         });
-    });
 
 
     const mergedEvaluationList = employeeList.reduce((result, emp) => {
@@ -303,6 +303,20 @@ const Evaluation = () => {
     };
 
     const handleAddImpact = (emp, prog) => {
+
+        if (prog.toDate) {
+            const toDate = new Date(prog.toDate);
+            // Add 3 months
+            const allowedDate = new Date(toDate);
+            allowedDate.setMonth(allowedDate.getMonth() + 3);
+            
+            // Check if current date is before allowed date
+            if (new Date() < allowedDate) {
+                Swal.fire("Info", "You can only add impact after 3 months of training completion.", "info");
+                return;
+            }
+        }
+
         setShowModal(true);
         setEmpData(emp);
         setInitialValues({
@@ -398,7 +412,7 @@ const Evaluation = () => {
                                                 <div className="program-name text-start">
                                                     {prog.courseName}
                                                 </div>
-                                                <div className="program-date">
+                                                <div className="program-date text-start">
                                                     {format(new Date(prog.fromDate), "dd-MM-yyyy")} <FaArrowRight className="mb-1" /> {format(new Date(prog.toDate), "dd-MM-yyyy")}
                                                 </div>
                                             </div>

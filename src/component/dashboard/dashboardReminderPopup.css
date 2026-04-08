@@ -1,0 +1,169 @@
+/* Bell Wrapper */
+.reminder-bell-wrapper {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    z-index: 9999;
+}
+
+/* Floating Button */
+.reminder-float-btn {
+    position: relative;
+    background: linear-gradient(135deg, #3652cf, #632d9a);
+    border: none;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 24px;
+    box-shadow: 0 10px 25px rgba(118, 75, 162, 0.4);
+    animation: floatPulse 2s infinite;
+    transition: all 0.3s ease;
+}
+
+.reminder-float-btn:hover {
+    transform: scale(1.08);
+}
+
+/* Badge */
+.reminder-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff3b3b;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 50px;
+    box-shadow: 0 0 10px rgba(255, 59, 59, 0.6);
+    animation: badgeBounce 1.5s infinite;
+}
+
+/* Popup */
+.reminder-popup {
+    position: fixed;
+    bottom: 110px;
+    right: 25px;
+    width: 340px;
+    background: #ffffff;
+    border-radius: 18px;
+    overflow: hidden;
+    z-index: 9999;
+    animation: slideInUp 0.5s ease;
+    border: 1px solid #eaeaea;
+}
+
+/* Header */
+.reminder-header {
+    background: linear-gradient(135deg, #3754d6, #764ba2);
+    color: #fff;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reminder-title {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.close-icon {
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* Body */
+.reminder-body {
+    padding: 14px;
+}
+
+/* Cards */
+.reminder-card {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+    transition: all 0.3s ease;
+    background: #f8f9ff;
+    border: 1px solid #ececec;
+}
+
+.reminder-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* Icon Section */
+.card-left {
+    width: 50px;
+    height: 50px;
+    background: #e9ecff;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 15px;
+}
+
+.reminder-icon {
+    font-size: 22px;
+    color: #5a67d8;
+}
+
+/* Text Section */
+.card-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.card-label {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.card-count {
+    font-size: 22px;
+    font-weight: 700;
+    color: #343a40;
+}
+
+/* Animations */
+@keyframes slideInUp {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes floatPulse {
+    0% { box-shadow: 0 0 0 0 rgba(118, 75, 162, 0.5); }
+    70% { box-shadow: 0 0 0 18px rgba(118, 75, 162, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(118, 75, 162, 0); }
+}
+
+@keyframes badgeBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+.pulse-icon {
+    animation: bellShake 1.8s infinite;
+}
+
+@keyframes bellShake {
+    0% { transform: rotate(0); }
+    20% { transform: rotate(15deg); }
+    40% { transform: rotate(-10deg); }
+    60% { transform: rotate(8deg); }
+    80% { transform: rotate(-5deg); }
+    100% { transform: rotate(0); }
+}
