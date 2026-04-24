@@ -571,3 +571,22 @@ export const addProjectRoleIds = async (data) => {
         throw error;
     }
 };
+
+export const updateCalendar = async (formData) => {
+    try {
+        const response = await axios.put(
+            `${API_URL}api/training/update-calendar`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    ...authHeader()
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating requisition", error);
+        return { success: false, message: "Something went wrong" };
+    }
+};

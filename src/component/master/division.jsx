@@ -26,7 +26,7 @@ const Division = () => {
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
         { name: "Division Code", selector: (row) => row.divisionCode, sortable: true, align: 'text-center' },
         { name: "Division Name", selector: (row) => row.divisionName, sortable: true, align: 'text-center' },
-        { name: "Division Head Name", selector: (row) => row.divisionHeadName, sortable: true, align: 'text-center' },
+        { name: "Division Head Name", selector: (row) => row.divisionHeadName, sortable: true, align: 'text-start' },
     ];
 
     const mappedData = () => {

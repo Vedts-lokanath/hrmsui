@@ -121,7 +121,7 @@ const SignAuthority = () => {
 
             return {
                 sn: `${index + 1}`,
-                admin: `${item?.employeeName},  ${item?.employeeDesignation}` || "-",
+                admin: `${item?.employeeName}` || "-",
                 adminRole: item?.signAuthRoleDesc || "-",
 
                 validFrom: item?.validFrom

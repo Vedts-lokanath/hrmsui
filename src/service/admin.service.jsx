@@ -150,3 +150,14 @@ export const updateNotification = async (notificationId) => {
     throw error;
   }
 }
+
+export const getAuditStampingList = async (selUser, fromDate,toDate) => {
+  try {
+    const response = await axios.get(`${API_URL}api/admin/audit-stamping-list`, { params: {selUser,fromDate,toDate }, headers: authHeader() });
+   
+    return response.data;
+  } catch (error) {
+    console.error('Error occurred in getAuditStampingList:', error);
+    throw error;
+  }
+};

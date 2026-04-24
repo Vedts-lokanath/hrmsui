@@ -31,7 +31,7 @@ const Employee = () => {
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
         { name: "PIS No", selector: (row) => row.pisNo, sortable: true, align: 'text-center' },
         { name: "Full Name", selector: (row) => row.empName, sortable: true, align: 'text-start' },
-        { name: "Designation", selector: (row) => row.empDesigName, sortable: true, align: 'text-start' },
+        { name: "Designation", selector: (row) => row.empDesigName, sortable: true, align: 'text-center' },
         { name: "Division", selector: (row) => row.division, sortable: true, align: 'text-center' },
     ];
 
@@ -39,7 +39,7 @@ const Employee = () => {
         return employeeList.map((emp, index) => ({
             sn: index + 1,
             pisNo: emp.empNo,
-            empName: ((emp.title || "") + ' ' + emp.empName || "").trim(),
+            empName: (emp.empName || "").trim(),
             empDesigName: emp.empDesigName,
             division: emp.empDivCode,
         }));

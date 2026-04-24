@@ -202,7 +202,7 @@ const UserManagerList = () => {
 
     const employeeOptions = employeeList.map(data => ({
         value: data?.empId,
-        label: ((data.title || "") + ' ' + data.empName + ", " + (data.empDesigName || "")).trim(),
+        label: (data.empName + ", " + (data.empDesigName || "")).trim(),
     }));
 
 

@@ -249,13 +249,13 @@ const FeedbackList = () => {
                 .filter(emp => Number(emp.empId) === Number(empId))
                 .map(emp => ({
                     value: emp.empId,
-                    label: ((emp.title || "") + " " + emp.empName + ", " + (emp.empDesigName || "")).trim(),
+                    label: (emp.empName + ", " + (emp.empDesigName || "")).trim(),
                 }))
             : [
                 { value: 0, label: "All" },
                 ...employeeList.map(emp => ({
                     value: emp.empId,
-                    label: ((emp.title || "") + " " + emp.empName + ", " + (emp.empDesigName || "")).trim(),
+                    label: (emp.empName + ", " + (emp.empDesigName || "")).trim(),
                 })),
             ];
 

@@ -29,7 +29,7 @@ const CepComponent = () => {
 
     const columns = [
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
-        { name: "Division Code", selector: (row) => row.divisionCode, sortable: true, align: 'text-center' },
+        { name: "Division Name ", selector: (row) => row.divisionCode, sortable: true, align: 'text-center' },
         { name: "From Date", selector: (row) => row.fromDate, sortable: true, align: 'text-center' },
         { name: "To Date", selector: (row) => row.toDate, sortable: true, align: 'text-center' },
         { name: "Duration", selector: (row) => row.duration, sortable: true, align: 'text-center' },

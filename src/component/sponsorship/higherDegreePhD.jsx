@@ -12,7 +12,7 @@ const HigherDegreePhD = () => {
 
     const navigate = useNavigate();
     const [sponsorship, setSponsorship] = useState([]);
-
+   
 
     useEffect(() => {
         fetchData("PHD");
@@ -29,7 +29,7 @@ const HigherDegreePhD = () => {
 
     const columns = [
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
-        { name: "Emplopyee Name", selector: (row) => row.employeeName, sortable: true },
+        { name: "Employee Name", selector: (row) => row.employeeName, sortable: true },
         { name: "From Date", selector: (row) => row.fromDate ? format(new Date(row.fromDate), "dd-MM-yyyy") : "", sortable: true, align: 'text-center' },
         { name: "To Date", selector: (row) => row.toDate ? format(new Date(row.toDate), "dd-MM-yyyy") : "", sortable: true, align: 'text-center' },
         { name: "Period (In Days)", selector: (row) => row.period, sortable: true, align: 'text-center' },
@@ -88,7 +88,11 @@ const HigherDegreePhD = () => {
             state: {
                 degreeType: "PHD",
                 isEdit: true,
-                editData: item
+                editData: item,
+                existingEmpIds:sponsorship
+                .filter(s => s.sponsorshipId !== item.sponsorshipId)
+                .map(s=>s.empId)
+              
             }
         });
     };
@@ -108,15 +112,17 @@ const HigherDegreePhD = () => {
                 <Datatable columns={columns} data={mappedData()} />
             </div>
             <div>
-                <button
-                    className="add"
-                    onClick={() => navigate("/higherDegree-add",
-                        {
-                            state: { degreeType: "PHD" }
-                        })}
-                >
-                    ADD NEW
-                </button>
+                <button className="add"
+                 onClick={() =>
+                   navigate("/higherDegree-add", {
+                   state: {
+                   degreeType: "PHD",
+                   existingEmpIds : sponsorship.map(e => e.empId)
+                  
+    }
+})
+}
+                > ADD NEW</button>
             </div>
         </div>
     );

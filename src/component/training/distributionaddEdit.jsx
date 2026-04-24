@@ -142,30 +142,29 @@ const AddEditDistributionComponent = () => {
             }
       };
 
-         const employeeOptions = employeeList.map((emp) => {
-         const isAlreadyUsed = existingEmpIds.includes(emp.empId);
-         const prefix = emp.salutation || emp.title || "";
+      const employeeOptions = employeeList.map((emp) => {
+            const isAlreadyUsed = existingEmpIds.includes(emp.empId);
             return {
-                value: emp.empId,
-               label: `${prefix ? prefix + " " : ""}${emp.empName || ""}${emp.empDesigName ? ", " + emp.empDesigName : ""}`.trim(),
-                isDisabled: isAlreadyUsed
-  };
-});
+                  value: emp.empId,
+                  label: `${emp.empName || ""}${emp.empDesigName ? ", " + emp.empDesigName : ""}`.trim(),
+                  isDisabled: isAlreadyUsed
+            };
+      });
 
-   const officerOptions = employeeList.map((emp) => {
-   const prefix = emp.salutation || emp.title || "";
+      const officerOptions = employeeList.map((emp) => {
+            const prefix = emp.salutation || emp.title || "";
 
-     return {
-      value: emp.empId,
-      label: `${prefix ? prefix + " " : ""}${emp.empName || ""}${emp.empDesigName ? ", " + emp.empDesigName : ""}`.trim(),
-  };
-    });
+            return {
+                  value: emp.empId,
+                  label: `${prefix ? prefix + " " : ""}${emp.empName || ""}${emp.empDesigName ? ", " + emp.empDesigName : ""}`.trim(),
+            };
+      });
 
       const empProjectIds = new Set(empProjects.map(p => p.projectId));
 
       const projectOptions = projectList
             .filter(project => !empProjectIds.has(project.projectId))
-             .filter((project) => project.projectCode !== "GEN")
+            .filter((project) => project.projectCode !== "GEN")
             .map(project => ({
                   value: project.projectId,
                   label: `${project.projectCode} - ${project.projectShortName}`,
@@ -309,8 +308,8 @@ const AddEditDistributionComponent = () => {
                                                                               value={employeeOptions.find(
                                                                                     (item) => item.value === Number(values.empId)
                                                                               ) || null
-                                                                        }
-                                                                      
+                                                                              }
+
                                                                               onChange={async (selected) => {
                                                                                     const selectedId = selected?.value ?? null;
                                                                                     setFieldValue("empId", selectedId);
@@ -328,10 +327,10 @@ const AddEditDistributionComponent = () => {
 
                                                                               isOptionDisabled={(option) => option.isDisabled}
                                                                               formatOptionLabel={(option) => (
-                                                                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                                               <span style={{ color: option.isDisabled ? "#aaa" : "inherit" }}>
-                                                                                      {option.label}
-                                                                               </span>
+                                                                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                                                          <span style={{ color: option.isDisabled ? "#aaa" : "inherit" }}>
+                                                                                                {option.label}
+                                                                                          </span>
                                                                                           {option.isDisabled && (
                                                                                                 <span
                                                                                                       style={{

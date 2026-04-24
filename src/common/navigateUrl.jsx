@@ -31,6 +31,8 @@ import CepComponent from "../component/training/cep.jsx";
 import AddEditCepComponent from "../component/training/addEditcep.jsx";
 import DistributionComponent from "../component/training/distribution.jsx";
 import AddEditDistributionComponent from "../component/training/distributionaddEdit.jsx";
+import AuditStampingList from "../component/admin/auditStamping.jsx";
+
 
 function AppRoutes() {
 
@@ -146,6 +148,7 @@ function AppRoutes() {
         <Route path="/cep-add" element={<AddEditCepComponent />} />
         <Route path="/hr-distribution" element={<DistributionComponent />}/>
         <Route path="/hr-distribution-add" element={<AddEditDistributionComponent /> } />
+        <Route path="/audit-stamping"  element={ <AuditStampingList /> } />
       </Routes>
 
     </>

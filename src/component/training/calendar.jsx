@@ -3,7 +3,7 @@ import Navbar from "../navbar/Navbar";
 import Datatable from "../../datatable/Datatable";
 import Select from "react-select";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
-import { addCalenderData, calendarFileDownload, getAgencies, getCalenderList } from "../../service/training.service";
+import { addCalenderData, calendarFileDownload, getAgencies, getCalenderList, updateCalendar } from "../../service/training.service";
 import Swal from "sweetalert2";
 import { useEffect } from "react";
 import { ErrorMessage, Field, Form, Formik } from "formik";
@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { FaDownload } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
 import { usePermission } from "../../common/usePermission";
+import { FaEdit } from "react-icons/fa";
 
 const Calendar = () => {
 
@@ -22,6 +23,7 @@ const Calendar = () => {
     const [calendarList, setCalendarList] = useState([]);
     const [agencyList, setAgencyList] = useState([]);
     const [showMoal, setShowModal] = useState(false);
+    const [editData, setEditData] = useState(null);
 
     const currentYear = new Date().getFullYear();
     const range = 20;
@@ -88,27 +90,60 @@ const Calendar = () => {
         coverFile: null
     });
 
-    const validationSchema = Yup.object().shape({
-        organizerId: Yup.string().required("Organizer is required"),
-        file: Yup.mixed().required("File is required"),
-        coverFile: Yup.mixed().notRequired()
-    });
+   const validationSchema = Yup.object().shape({
+    organizerId: Yup.string().required("Organizer is required"),
+
+    file: Yup.mixed().when("isEdit", {
+        is: false, 
+        then: (schema) =>
+            schema
+                .required("File is required")
+                .test("fileType", "Unsupported File Format", (value) => {
+                    if (!value) return false;
+                    return ["application/pdf", "image/jpeg", "image/png"].includes(value.type);
+                })
+                .test("fileSize", "File too large (Max 5MB)", (value) => {
+                    if (!value) return false;
+                    return value.size <= 5 * 1024 * 1024;
+                }),
+
+        otherwise: (schema) =>
+            schema
+                .nullable()
+                .notRequired()
+                .test("fileType", "Unsupported File Format", (value) => {
+                    if (!value) return true; // allow empty in edit
+                    return ["application/pdf", "image/jpeg", "image/png"].includes(value.type);
+                })
+                .test("fileSize", "File too large (Max 5MB)", (value) => {
+                    if (!value) return true;
+                    return value.size <= 5 * 1024 * 1024;
+                })
+    }),
+
+    coverFile: Yup.mixed().notRequired()
+});
 
     const columns = [
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
         { name: "Organizer", selector: (row) => row.agency, sortable: true, align: 'text-center' },
         { name: "Uploaded Date", selector: (row) => row.uploadDate, sortable: true, align: 'text-center' },
         { name: "File", selector: (row) => row.file, sortable: true, align: 'text-center' },
+        { name: "Action", selector: (row) => row.action, align: 'text-center' },
     ];
 
     const mappedData = () => {
         return calendarList.map((data, index) => ({
             sn: index + 1,
             agency: data.organizer,
-            uploadDate: data.createdDate ? format(new Date(data.createdDate), "dd-MM-yyyy hh:mm a") : "-",
+            uploadDate: data.createdDate
+                ? format(new Date(data.createdDate), "dd-MM-yyyy hh:mm a")
+                : "-",
+
             file: (
                 <>
                     <Tooltip id="Tooltip" className='text-white' />
+
                     {data.calendarFileName && (
                         <button
                             className="download-btn me-2"
@@ -136,8 +171,24 @@ const Calendar = () => {
                     {!data.calendarFileName && !data.coveringLetter && "-"}
                 </>
             ),
+
+
+            action: (
+                <>
+                    <Tooltip id="Tooltip" className='text-white' />
+                    <button
+                        className="btn btn-sm btn-warning me-2"
+                        data-tooltip-id="Tooltip"
+                        data-tooltip-content="Edit"
+                        data-tooltip-place="top"
+                        onClick={() => handleEdit(data)}
+                    >
+                        <FaEdit className="fs-6" />
+                    </button>
+                </>
+            )
         }));
-    }
+    };
 
     const handleDownload = async (id, type) => {
         let response = await calendarFileDownload(id, type);
@@ -168,7 +219,24 @@ const Calendar = () => {
 
     const handleAdd = () => {
         setShowModal(true);
+        setEditData(null);
     };
+
+    const handleEdit = (item) => {
+        setEditData(item);
+        setShowModal(true);
+    }
+
+
+    useEffect(() => {
+        if (editData != null && Object.keys(editData).length > 0) {
+            setInitialValues({
+                organizerId: editData.organizerId || "",
+                file: null,
+                coverFile: null
+            });
+        }
+    }, [editData]);
 
     const closeModal = () => {
         setShowModal(false);
@@ -179,8 +247,7 @@ const Calendar = () => {
 
             const dto = {
                 ...values,
-                agencyId: values.agencyId,
-                trainingName: values.trainingName,
+                calendarId: editData?.calendarId || "",
                 year: selectedYear,
             }
 
@@ -188,7 +255,7 @@ const Calendar = () => {
             if (!confirm) {
                 return;
             }
-            const response = await addCalenderData(dto);
+            const response = editData ? await updateCalendar(dto) : await addCalenderData(dto);
             if (response && response.success) {
                 Swal.fire({
                     icon: "success",
@@ -210,8 +277,12 @@ const Calendar = () => {
         }
     };
 
+    const isEdit = editData != null && Object.keys(editData).length > 0;
+
     const usedAgencyIds = new Set(
-        calendarList.map(item => item?.organizerId)
+        calendarList
+            .filter(item => !isEdit || item.calendarId !== editData?.calendarId)
+            .map(item => item?.organizerId)
     );
 
     const agencyOptions = agencyList
@@ -224,7 +295,6 @@ const Calendar = () => {
     return (
         <div>
             <Navbar />
-
             <h3 className="fancy-heading mt-3">
                 Calendar List
                 <span className="underline-glow">
@@ -296,7 +366,11 @@ const Calendar = () => {
                         <div className="modal-dialog modal-xl">
                             <div className="modal-content">
                                 <div className="modal-header custom-modal-header">
-                                    <h5 className="modal-title"><span className="cs-head-text">Add Calender Data</span></h5>
+                                    <h5 className="modal-title">
+                                       <span className="cs-head-text">
+                                        {isEdit ? "Edit Calendar" : "Add Calendar"}
+                                       </span>
+                                        </h5>
                                     <button type="button" className="btn-close" onClick={closeModal}></button>
                                 </div>
                                 <div className="modal-body custom-modal-body">
@@ -316,31 +390,57 @@ const Calendar = () => {
                                                         <Select
                                                             className="cs-select"
                                                             options={agencyOptions}
-                                                            value={agencyOptions.find(o => o.value === values.agencyId)}
+                                                            value={agencyOptions.find(o => o.value === values.organizerId)}
                                                             onChange={o => setFieldValue("organizerId", o?.value || "")}
                                                         />
                                                         <ErrorMessage name="organizerId" component="div" className="invalid-msg" />
                                                     </div>
 
                                                     <div className="col-md-4">
-                                                        <label className="form-label">Calendar File</label><span className="text-danger">*</span>
+
+                                                        <label className="form-label">Calendar File</label>
+                                                        <span className="text-danger">*</span>
+                                                        {isEdit && editData?.calendarFileName && (
+                                                            <span
+                                                                className="file-link"
+                                                                style={{ color: "#0c68f1", cursor: "pointer", margin: "10px", gap: "9px", fontSize: "16px" }}
+                                                                onClick={() => handleDownload(editData.calendarId, "CF")}
+                                                            >
+                                                                <FaDownload className="me-1" />
+                                                               
+                                                            </span>
+
+                                                        )}
                                                         <input name="file" type="file" className="form-control" onChange={e => setFieldValue("file", e.currentTarget.files[0])} />
                                                         <ErrorMessage name="file" component="div" className="invalid-msg" />
                                                     </div>
 
+
                                                     <div className="col-md-4">
                                                         <label className="form-label">Covering Letter</label>
+                                                        {isEdit && editData?.calendarFileName && (
+                                                            <span
+                                                                className="file-link"
+                                                                style={{ color: "#9d0dfd", cursor: "pointer", margin: "10px", gap: "9px", fontSize: "16px" }}
+                                                                onClick={() => handleDownload(editData.calendarId, "CF")}
+                                                            >
+                                                                <FaDownload className="me-1" />
+                                                              
+                                                            </span>
+
+                                                        )}
                                                         <input name="coverFile" type="file" className="form-control" onChange={e => setFieldValue("coverFile", e.currentTarget.files[0])} />
                                                         <ErrorMessage name="coverFile" component="div" className="invalid-msg" />
                                                     </div>
                                                 </div>
 
                                                 <div className="text-center mt-4">
-                                                    <button type="submit"
-                                                        className="submit"
-                                                        disabled={isSubmitting || !isValid}
+                                                    <button
+                                                        type="submit"
+                                                        className={isEdit ? "update" : "submit"}
+                                                         disabled={isSubmitting || !isValid}
                                                     >
-                                                        Submit
+                                                        {isEdit ? "UPDATE" : "SUBMIT"}
                                                     </button>
                                                     <button
                                                         type="button"
@@ -355,7 +455,7 @@ const Calendar = () => {
                                         )}
                                     </Formik>
                                 </div>
-                            </div>
+                            </div>   
                         </div>
                     </div>
                 </>

@@ -12,6 +12,7 @@ import { addHigherDegree, editHigherDegree } from "../../service/sponsorship.ser
 import { format } from "date-fns";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 
+
 const HigherDegreeAddEdit = () => {
 
     const navigate = useNavigate();
@@ -24,6 +25,8 @@ const HigherDegreeAddEdit = () => {
     const [employeeList, setEmployeeList] = useState([]);
     const roleName = localStorage.getItem("roleName");
     const empId = localStorage.getItem("empId");
+
+    const existingEmpIds = location.state?.existingEmpIds || [];
 
     const fetchEmployees = async () => {
         try {
@@ -58,13 +61,11 @@ const HigherDegreeAddEdit = () => {
 
    const employeeOptions = employeeList.map((emp) => ({
     value: emp.empId,
-    label: (
-        (emp.salutation?.trim() || emp.title?.trim() || "") +
-        " " +
-        (emp.empName || "") 
-      
-    ).trim(),
-    data: emp
+    label: ((emp.empName || "")).trim(),
+    data: emp,
+    isDisabled: existingEmpIds.includes(emp.empId)
+    
+    
 }));
 
     const [initialValues, setInitialValues] = useState({
@@ -121,6 +122,8 @@ const HigherDegreeAddEdit = () => {
         }
     }, [employeeList]);
 
+
+  
     const calculateDuration = (fromDate, toDate, setFieldValue) => {
         if (fromDate && toDate) {
             const diffTime = new Date(toDate) - new Date(fromDate);
@@ -264,8 +267,14 @@ const HigherDegreeAddEdit = () => {
                                                 (item) => item.value === Number(values.empId)
                                             ) || null
                                             }
+                                          
+                                             isOptionDisabled={(option) => option.isDisabled}
+
                                             onChange={(option) => {
-                                                if (option) {
+                                                
+                                                if (option) {   
+                                                    if(option.isDisabled) return;
+
                                                     const emp = option.data;
                                                     setFieldValue("empId", emp.empId);
                                                     setFieldValue("designation", emp.empDesigName);
