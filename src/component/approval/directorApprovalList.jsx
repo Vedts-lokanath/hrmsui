@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Datatable from "../../datatable/Datatable";
 import RequisitionPreview from "../training/requisitionPreview";
-import { approveRequisition, getLabMasterData, getReqApprovedList, getRequisitionPrint, recommendToDFA } from "../../service/training.service";
+import { approveRequisition, getLabMasterData, getReqApprovedList, getReqDirectorApprovedList, getRequisitionPrint, recommendToDFA } from "../../service/training.service";
 import { format } from "date-fns";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 import Swal from "sweetalert2";
@@ -29,7 +29,7 @@ const DirectorApprovalList = () => {
 
     const fetchRequsitionApprovedList = async () => {
         try {
-            const response = await getReqApprovedList();
+            const response = await getReqDirectorApprovedList();
             setRequisitionApprovedList(response?.data || []);
         } catch (error) {
             console.error('Error fetching requisition approved list:', error);
