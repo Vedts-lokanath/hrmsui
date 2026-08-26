@@ -46,7 +46,7 @@ const OrganizerList = () => {
 
     const columns = [
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
-        { name: "Organizer", selector: (row) => row.organizer, sortable: true, align: 'text-center' },
+        { name: "Organizer", selector: (row) => row.organizer, sortable: true, align: 'text-start' },
         { name: "Contact Name", selector: (row) => row.contactName, sortable: true, align: 'text-start' },
         { name: "Phone", selector: (row) => row.phoneNo, sortable: true, align: 'text-center' },
         { name: "Fax No", selector: (row) => row.faxNo, sortable: true, align: 'text-center' },

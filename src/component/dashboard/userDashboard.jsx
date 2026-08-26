@@ -147,6 +147,7 @@ const UserDashboard = () => {
                         endDate
                     ),
                     getUserEvaluationCount(
+                        empId,
                         startDate,
                         endDate
                     ),

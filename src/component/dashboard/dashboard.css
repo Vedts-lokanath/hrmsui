@@ -1542,3 +1542,547 @@
     }
 
 }
+
+/* =====================================================
+   COURSE TYPE STACKED BAR CHART
+===================================================== */
+
+.course-type-chart-card {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 440px;
+}
+
+
+/* Main chart */
+
+.course-type-chart-wrapper {
+    position: relative;
+
+    display: flex;
+
+    width: 100%;
+
+    flex: 1;
+    min-height: 0;
+
+    margin-top: 14px;
+
+    padding: 10px 0 0;
+
+    align-items: center;
+}
+
+
+/* =====================================================
+   Y AXIS
+===================================================== */
+
+.course-type-y-axis {
+    width: 42px;
+
+    flex-shrink: 0;
+
+    height: 190px;
+
+    padding-bottom: 32px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: space-between;
+
+    align-items: flex-end;
+
+    padding-right: 10px;
+}
+
+
+.course-type-y-axis span {
+    font-size: 11px;
+
+    color: #94a3b8;
+
+    font-weight: 500;
+}
+
+
+/* =====================================================
+   HORIZONTAL SCROLL AREA
+===================================================== */
+
+.course-type-scroll {
+    flex: 1;
+
+    width: 100%;
+
+    overflow-x: auto;
+
+    overflow-y: hidden;
+
+    padding-bottom: 8px;
+
+    scrollbar-width: thin;
+}
+
+
+.course-type-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+
+.course-type-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+
+    border-radius: 20px;
+}
+
+
+/* =====================================================
+   CHART
+===================================================== */
+
+.course-type-chart {
+    position: relative;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(var(--course-type-count), minmax(70px, 1fr));
+
+    column-gap: 16px;
+
+    min-width: 850px;
+
+    height: 232px;
+
+    padding: 0 12px;
+}
+
+
+/* Individual Course Type */
+
+.course-type-bar-item {
+    position: relative;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    min-width: 70px;
+}
+
+
+/* =====================================================
+   BAR AREA
+===================================================== */
+
+.course-type-bar-area {
+    position: relative;
+
+    width: 100%;
+
+    height: 190px;
+
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: center;
+
+    border-bottom: 1px solid #dbe4ee;
+}
+
+
+/* =====================================================
+   GRID LINES
+===================================================== */
+
+.course-type-grid-lines {
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: space-between;
+
+    pointer-events: none;
+}
+
+
+.course-type-grid-lines span {
+    width: 100%;
+
+    border-top:
+        1px dashed rgba(148, 163, 184, 0.35);
+}
+
+
+/* =====================================================
+   STACKED BAR
+===================================================== */
+
+.course-type-bar {
+    position: relative;
+
+    z-index: 2;
+
+    width: 52px;
+
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column-reverse;
+
+    justify-content: flex-start;
+
+    align-items: stretch;
+
+    border-radius: 8px 8px 0 0;
+
+    overflow: visible;
+
+    transition: transform 0.25s ease;
+}
+
+
+.course-type-bar:hover {
+    transform: translateY(-4px);
+}
+
+
+/* =====================================================
+   BAR SEGMENTS
+===================================================== */
+
+.course-type-bar-segment {
+    position: relative;
+
+    width: 100%;
+
+    min-height: 2px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-top:
+        1px solid rgba(255, 255, 255, 0.45);
+
+    transition:
+        opacity 0.2s ease,
+        filter 0.2s ease;
+}
+
+
+.course-type-bar-segment:hover {
+    filter: brightness(1.08);
+}
+
+
+.course-type-bar-segment span {
+    font-size: 10px;
+
+    color: #ffffff;
+
+    font-weight: 700;
+
+    line-height: 1;
+
+    padding: 2px;
+
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+
+/* First segment bottom rounding */
+
+.course-type-bar-segment:first-child {
+    border-radius: 0 0 8px 8px;
+}
+
+
+/* Last segment top rounding */
+
+.course-type-bar-segment:last-child {
+    border-radius: 8px 8px 0 0;
+}
+
+
+/* =====================================================
+   TOTAL VALUE ABOVE BAR
+===================================================== */
+
+.course-type-bar-value {
+    position: absolute;
+
+    top: -24px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    min-width: 28px;
+
+    padding: 3px 7px;
+
+    background: #ffffff;
+
+    border: 1px solid #dbe4ee;
+
+    border-radius: 6px;
+
+    color: #334155;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    text-align: center;
+
+    box-shadow:
+        0 3px 8px rgba(15, 23, 42, 0.08);
+}
+
+
+/* =====================================================
+   COURSE TYPE LABEL
+===================================================== */
+
+.course-type-label {
+    width: 100%;
+
+    min-height: 32px;
+
+    margin-top: 6px;
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: center;
+
+    text-align: center;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    line-height: 1.3;
+
+    color: #475569;
+
+    word-break: break-word;
+}
+
+
+/* =====================================================
+   CADRE LEGEND
+===================================================== */
+
+.course-type-cadre-legend {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    justify-content: center;
+
+    gap: 10px 22px;
+
+    margin-top: auto;
+
+    padding-top: 14px;
+
+    border-top: 1px solid #edf1f5;
+
+    flex-shrink: 0;
+}
+
+
+.course-type-cadre-legend-item {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    font-size: 12px;
+
+    font-weight: 500;
+
+    color: #64748b;
+
+    white-space: nowrap;
+}
+
+
+.course-type-cadre-dot {
+    width: 10px;
+
+    height: 10px;
+
+    border-radius: 50%;
+
+    flex-shrink: 0;
+}
+
+
+/* =====================================================
+   EMPTY BAR STATE
+===================================================== */
+
+.course-type-bar-item:has(.course-type-bar-area > .course-type-grid-lines:only-child) .course-type-bar-area::after {
+
+    content: "";
+
+    position: absolute;
+
+    bottom: 0;
+
+    width: 52px;
+
+    height: 2px;
+
+    background: #cbd5e1;
+
+}
+
+
+/* =====================================================
+   LARGE SCREENS
+===================================================== */
+
+@media (min-width: 1400px) {
+
+    .course-type-chart {
+        min-width: 100%;
+    }
+
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 991.98px) {
+
+    .course-type-chart-card {
+        max-height: 400px;
+    }
+
+    .course-type-y-axis {
+        width: 38px;
+
+        height: 160px;
+    }
+
+    .course-type-chart {
+        min-width: 800px;
+
+        height: 200px;
+
+        column-gap: 12px;
+    }
+
+    .course-type-bar-area {
+        height: 160px;
+    }
+
+    .course-type-bar {
+        width: 46px;
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 767.98px) {
+
+    .course-type-chart-card {
+        max-height: unset;
+    }
+
+    .course-type-chart-wrapper {
+        margin-top: 10px;
+    }
+
+    .course-type-y-axis {
+        width: 32px;
+
+        height: 150px;
+
+        padding-right: 6px;
+    }
+
+    .course-type-y-axis span {
+        font-size: 9px;
+    }
+
+    .course-type-chart {
+        height: 190px;
+
+        min-width: 720px;
+
+        grid-template-columns:
+            repeat(var(--course-type-count), minmax(55px, 1fr));
+
+        column-gap: 10px;
+
+        padding: 0 6px;
+    }
+
+    .course-type-bar-area {
+        height: 150px;
+    }
+
+    .course-type-bar {
+        width: 38px;
+    }
+
+    .course-type-label {
+        font-size: 9px;
+
+        min-height: 30px;
+    }
+
+    .course-type-bar-value {
+        top: -22px;
+
+        font-size: 9px;
+
+        padding: 2px 5px;
+    }
+
+    .course-type-bar-segment span {
+        font-size: 8px;
+    }
+
+    .course-type-cadre-legend {
+        justify-content: flex-start;
+
+        gap: 8px 14px;
+
+        padding-bottom: 5px;
+    }
+
+    .course-type-cadre-legend-item {
+        font-size: 10px;
+    }
+
+}

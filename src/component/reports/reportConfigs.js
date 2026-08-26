@@ -39,8 +39,8 @@ export const REPORT_CONFIGS = {
   "2": {
     fileName: "Training Report (Course)",
     columns: [
-      { name: "SN", selector: (row) => row.sn, sortable: false, align: 'text-center' },
-      { name: "PIS No", selector: (row) => row.empNo, sortable: true, align: 'text-center' },
+      { name: "SN", selector: (row) => row.sn, sortable: false, align: 'text-center', width: "12%"  },
+      { name: "PIS No", selector: (row) => row.empNo, sortable: true, align: 'text-center', width: "18%" },
       { name: "Cadre", selector: (row) => row.desigCadre, sortable: true, align: 'text-center' },
       { name: "Employee Name", selector: (row) => row.initiatingOfficerName, sortable: true, align: 'text-left', width: "18%" },
       { name: "Designation", selector: (row) => row.empDesigName, sortable: true, align: 'text-center' },
@@ -62,8 +62,8 @@ export const REPORT_CONFIGS = {
   "3": {
     fileName: "Training Report(s) (Seminar/Symposium/Conference/Workshop)",
     columns: [
-      { name: "SN", selector: (row) => row.sn, sortable: false, align: 'text-center' },
-      { name: "PIS No", selector: (row) => row.empNo, sortable: true, align: 'text-center' },
+      { name: "SN", selector: (row) => row.sn, sortable: false, align: 'text-center', width: "12%" },
+      { name: "PIS No", selector: (row) => row.empNo, sortable: true, align: 'text-center', width: "18%" },
       { name: "Cadre", selector: (row) => row.desigCadre, sortable: true, align: 'text-center' },
       { name: "Employee Name", selector: (row) => row.initiatingOfficerName, sortable: true, align: 'text-left', width: "18%" },
       { name: "Designation", selector: (row) => row.empDesigName, sortable: true, align: 'text-center' },

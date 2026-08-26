@@ -95,27 +95,27 @@ const MandatoryTraining = () => {
                                     <MdLibraryAddCheck className="fs-6" />
                                 </button>
                             }
-                            {(item.isAttend === "N" || item.isAttend === null) &&
-                                ["ROLE_SA_HRT", "ROLE_ADMIN"].includes(roleName) &&
-                                (item.fromDate && new Date(item.fromDate) <= new Date())
-                                &&
-                                (
-                                    <button
-                                        className="btn btn-sm btn-primary me-2"
-                                        onClick={() => handleAttend(item)}
-                                        data-tooltip-id="Tooltip"
-                                        data-tooltip-content="Attendance"
-                                        data-tooltip-place="top"
-                                    >
-                                        <FaUsersLine className="fs-6" />
-                                    </button>
-                                )}
                         </>
                     ) : (
-                        <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                        <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold me-2">
                             Approved
                         </span>
                     )}
+                    {(item.isAttend === "N" || item.isAttend === null) &&
+                        ["ROLE_SA_HRT", "ROLE_ADMIN"].includes(roleName) &&
+                        (item.fromDate && new Date(item.fromDate) <= new Date())
+                        &&
+                        (
+                            <button
+                                className="btn btn-sm btn-primary me-2"
+                                onClick={() => handleAttend(item)}
+                                data-tooltip-id="Tooltip"
+                                data-tooltip-content="Attendance"
+                                data-tooltip-place="top"
+                            >
+                                <FaUsersLine className="fs-6" />
+                            </button>
+                        )}
                 </>
             )
         }));

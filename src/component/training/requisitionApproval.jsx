@@ -162,7 +162,7 @@ const RequisitionApproval = () => {
             action: (
                 <>
                     <Tooltip id="Tooltip" className='text-white' />
-                    {["AF", "SF", "AR", "AS", "CA"].includes(item.status) && (
+                    {["AF", "SF", "AR", "AS", "CA", "AG"].includes(item.status) && (
                         <>
                             <button
                                 className="btn btn-sm btn-success me-2"

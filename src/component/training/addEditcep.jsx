@@ -239,7 +239,8 @@ const AddEditCepComponent = () => {
   const fetchDivisions = async () => {
     try {
       const response = await getDivisions();
-      setDivisionList(response?.data || []);
+      const result = response?.data || [];
+      setDivisionList(result.filter(item => item.isActive == 1));
     } catch (error) {
       console.error("Error fetching divisions:", error);
       Swal.fire("Error", "Failed to fetch division data. Please try again later.", "error");

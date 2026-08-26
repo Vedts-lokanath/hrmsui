@@ -68,7 +68,7 @@ const Journal = () => {
         { name: "Employee Name", selector: (row) => row.empName, sortable: true, align: 'text-start' },
         { name: "Title of Paper", selector: (row) => row.titleOfPaper, sortable: true, align: 'text-start' },
         { name: "Journal Type", selector: (row) => row.journalType, sortable: true, align: 'text-center' },
-        { name: "Journal", selector: (row) => row.journalName, sortable: true, align: 'text-center' },
+        { name: "Journal", selector: (row) => row.journalName, sortable: true, align: 'text-start' },
         { name: "Volume", selector: (row) => row.volume, sortable: true, align: 'text-center' },
         { name: "Impact Factor of Journal", selector: (row) => row.impactFactor, sortable: true, align: 'text-center' },
         { name: "Publication Fee (Rs.)", selector: (row) => row.publicationFee, sortable: true, align: 'text-right' },

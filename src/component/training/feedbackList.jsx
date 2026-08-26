@@ -82,13 +82,13 @@ const FeedbackList = () => {
 
     const columns = [
         { name: "SN", selector: (row) => row.sn, sortable: true, align: 'text-center' },
-        { name: "Requisition Number", selector: (row) => row.requisitionNumber, sortable: true, align: 'text-left' },
+        { name: "Requisition No", selector: (row) => row.requisitionNumber, sortable: true, align: 'text-left' },
+        { name: "Feedback Given By", selector: (row) => row.participantName, sortable: true, align: 'text-left' },
         { name: "Course", selector: (row) => row.courseName, sortable: true, align: 'text-left' },
         { name: "Organizer", selector: (row) => row.organizer, sortable: true, align: 'text-left' },
         { name: "Duration (Day)", selector: (row) => row.programDuration, sortable: true, align: 'text-center' },
         { name: "From Date", selector: (row) => row.fromDate, sortable: true, align: 'text-center' },
         { name: "To Date", selector: (row) => row.toDate, sortable: true, align: 'text-center' },
-        { name: "Feedback Given By", selector: (row) => row.participantName, sortable: true, align: 'text-left' },
         { name: "Action", selector: (row) => row.action, sortable: true, align: 'text-center' },
     ];
 
@@ -246,7 +246,7 @@ const FeedbackList = () => {
                     showConfirmButton: false,
                     timer: 2000,
                 });
-                fetchFeedbackData(selectedEmpId);
+                fetchFeedbackData(selectedEmpId, format(fromDateSel, "yyyy-MM-dd"), format(toDateSel, "yyyy-MM-dd"));
             } else {
                 Swal.fire("Warning", response.message, "warning");
             }

@@ -128,29 +128,42 @@ const Transaction = () => {
         { code: "FA", label: "Final Approved By Director" }
     ];
 
-    const prepareStepper = (transactions = [], registrationFee, isGroup) => {
+    const prepareStepper = (
+        transactions = [],
+        registrationFee,
+        isGroup
+    ) => {
 
         const statusMap = {};
+
         transactions.forEach((t) => {
             statusMap[t.statusCode] = t;
         });
 
         let steps = [];
 
+        // =========================
         // FREE TRAINING
+        // =========================
         if (registrationFee === 0) {
+
             steps = [...commonSteps];
-        }
-        // PAID TRAINING
-        else {
+
+        } else {
+
+            // =========================
+            // PAID TRAINING
+            // =========================
             if (registrationFee < cashLimit[0]?.cashLimit) {
+
                 steps = [...commonSteps];
-            } else if (registrationFee >= cashLimit[0]?.cashLimit) {
-                steps = [...paidBaseSteps];
+
             } else {
-                steps = [...commonSteps];
+
+                steps = [...paidBaseSteps];
             }
 
+            // Finance workflow
             const hasFinance = transactions.some(
                 (t) => ["DA", "FC", "FA"].includes(t.statusCode)
             );
@@ -160,21 +173,59 @@ const Transaction = () => {
             }
         }
 
-        // Show AG only for group, otherwise AR
-        steps = steps.filter(step => {
-            if (isGroup === "Y") {
-                return step.code !== "AR";
-            }
-            return step.code !== "AG";
-        });
+        // =========================
+        // GROUP BASED FLOW
+        // =========================
 
+        if (isGroup === "Y") {
+
+            // Remove AR
+            steps = steps.filter(
+                step => step.code !== "AR"
+            );
+
+        } else if (isGroup === "B") {
+
+            // Reorder:
+            // AA -> AG -> AR -> remaining steps
+            const order = [
+                "AA",
+                "AG",
+                "AR",
+                "AS",
+                "CA",
+                "AV",
+                "CO",
+                "DA",
+                "FC",
+                "FA"
+            ];
+
+            steps = [...steps].sort(
+                (a, b) =>
+                    order.indexOf(a.code) -
+                    order.indexOf(b.code)
+            );
+
+        } else {
+
+            // Non-group: remove AG
+            steps = steps.filter(
+                step => step.code !== "AG"
+            );
+        }
+
+        // =========================
+        // PREPARE STEPPER RESPONSE
+        // =========================
         return steps.map(step => {
+
             const txn = statusMap[step.code];
 
             return {
                 ...step,
                 completed: !!txn,
-                colorCode: txn ? txn.colorCode : null
+                colorCode: txn?.colorCode ?? null
             };
         });
     };
@@ -184,7 +235,7 @@ const Transaction = () => {
         reqData?.registrationFee,
         reqData?.isGroup
     );
-    
+
 
     return (
         <>

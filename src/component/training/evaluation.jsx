@@ -168,9 +168,9 @@ const Evaluation = () => {
 
     const requisitionMap = new Map();
     (requisitionList || [])
-        .filter(r => r.status === "AV")
+        .filter(r => r.status === "CO" || r.status === "FA")
         .forEach(r => {
-            if (!requisitionMap.has(r.initiatingOfficer) && r.status === "AV") {
+            if (!requisitionMap.has(r.initiatingOfficer) && (r.status === "CO" || r.status === "FA")) {
                 requisitionMap.set(r.initiatingOfficer, []);
             }
 

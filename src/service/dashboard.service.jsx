@@ -52,10 +52,10 @@ export const getRequisitionPending = async (empId, startDate, endDate) => {
     }
 };
 
-export const getUserEvaluationCount = async (startDate, endDate) => {
+export const getUserEvaluationCount = async (empId, startDate, endDate) => {
     try {
         return (await axios.get(`${API_URL}api/dashboard/user-evaluation`, {
-            params: { startDate, endDate },
+            params: { empId, startDate, endDate },
             headers: { 'Content-Type': 'application/json', ...authHeader() }
         })).data;
     } catch (error) {

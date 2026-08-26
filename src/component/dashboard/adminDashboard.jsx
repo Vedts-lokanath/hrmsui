@@ -28,15 +28,14 @@ const COURSE_TYPES = [
     "Symposium",
     "Conference",
     "Workshop",
+    "CEP",
+    "Inhouse CEP",
+    "Managerial",
+    "MDP",
+    "Targeted",
+    "Technical",
+    "Other"
 ];
-
-const COURSE_TYPE_COLORS = {
-    "Training": "#4361ee",
-    "Seminar": "#06b6d4",
-    "Symposium": "#f59e0b",
-    "Conference": "#8b5cf6",
-    "Workshop": "#ec4899",
-};
 
 export const getCurrentFinancialYear = () => {
     const today = new Date();
@@ -88,6 +87,64 @@ const buildCountMap = (entries, keys) => {
     return map;
 };
 
+const buildCourseTypeCounts = (
+    entries = [],
+    courseTypes = [],
+    cadres = []
+) => {
+
+    const typeMap = {};
+    courseTypes.forEach((type) => {
+
+        const cadreCounts = {};
+
+        cadres.forEach((cadre) => {
+            cadreCounts[cadre] = 0;
+        });
+
+        typeMap[type] = {
+            type,
+            count: 0,
+            courseName: null,
+            cadreCounts,
+        };
+
+    });
+
+
+    (entries || []).forEach((entry) => {
+
+        if (!entry?.type) return;
+
+        const type = entry.type;
+
+        if (!typeMap[type]) {
+            return;
+        }
+
+        const apiCadreCounts = entry.cadreCounts || {};
+        const cadreCounts = {};
+
+        cadres.forEach((cadre) => {
+            cadreCounts[cadre] = apiCadreCounts[cadre] || 0;
+        });
+
+
+        typeMap[type] = {
+            type,
+            count: entry.count || 0,
+            courseName: entry.courseName || null,
+            cadreCounts,
+        };
+
+    });
+
+    return courseTypes.map(
+        (type) => typeMap[type]
+    );
+
+};
+
 const buildCourseParticipants = (entries) => {
     return (entries || [])
         .map((entry) => {
@@ -117,7 +174,7 @@ const mapDashboardResponse = (raw) => {
         attended: raw.attended || 0,
         attendedByCadre: buildCountMap(raw.attendedByCadre, CADRES),
         notAttendedByCadre: buildCountMap(raw.notAttendedByCadre, CADRES),
-        courseTypeCounts: buildCountMap(raw.courseCounts, COURSE_TYPES),
+        courseTypeCounts: buildCourseTypeCounts(raw.courseTypeCounts, COURSE_TYPES, Object.keys(CADRE_COLORS)),
         courseParticipants: buildCourseParticipants(raw.courseParticipants),
     };
 };
@@ -179,13 +236,15 @@ const AdminDashboard = () => {
 
 
     const courseTypeTotal = useMemo(() => {
-        if (!dashboardData) return 0;
-        return Object.values(dashboardData.courseTypeCounts).reduce(
-            (sum, value) => sum + value,
+        if (!dashboardData?.courseTypeCounts?.length) {
+            return 0;
+        }
+
+        return dashboardData.courseTypeCounts.reduce(
+            (sum, item) => sum + (Number(item?.count) || 0),
             0
         );
-    }, [dashboardData]);
-
+    }, [dashboardData?.courseTypeCounts]);
 
     const totalCourseParticipants = useMemo(() => {
         if (!dashboardData) return 0;
@@ -207,6 +266,7 @@ const AdminDashboard = () => {
 
 
     const hasCourseData = !!dashboardData && dashboardData.courseParticipants.length > 0;
+
 
     return (
 
@@ -311,15 +371,15 @@ const AdminDashboard = () => {
 
                         {/* Course type breakdown */}
 
-                        <div className="col-12 col-xl-4">
-                            <div className="dashboard-card">
+                        {/* Course type breakdown */}
+                        <div className="col-12 col-xl-8 d-flex">
+                            <div className="dashboard-card course-type-chart-card d-flex flex-column w-100">
+
                                 <div className="chart-header">
                                     <div>
-                                        <h5>
-                                            Course Type Requisitions
-                                        </h5>
+                                        <h5>Course Type Attended Requisitions</h5>
                                         <span>
-                                            Course type wise requisition count
+                                            Course type wise requisition count with cadre distribution
                                         </span>
                                     </div>
 
@@ -328,45 +388,30 @@ const AdminDashboard = () => {
                                     </div>
                                 </div>
 
+                                <CourseTypeStackedBarChart
+                                    data={dashboardData.courseTypeCounts || []}
+                                    courseTypes={COURSE_TYPES}
+                                    cadres={Object.keys(CADRE_COLORS)}
+                                    colors={CADRE_COLORS}
+                                />
 
-                                <div className="pie-content">
-                                    <PieChart
-                                        data={dashboardData.courseTypeCounts}
-                                        total={courseTypeTotal}
-                                        keys={COURSE_TYPES}
-                                        colors={COURSE_TYPE_COLORS}
-                                    />
-
-                                    <PieLegend
-                                        data={dashboardData.courseTypeCounts}
-                                        total={courseTypeTotal}
-                                        keys={COURSE_TYPES}
-                                        colors={COURSE_TYPE_COLORS}
-                                    />
-                                </div>
                             </div>
                         </div>
 
 
                         {/* Attended by cadre */}
-
-                        <div className="col-12 col-xl-4">
-                            <div className="dashboard-card">
+                        <div className="col-12 col-xl-4 d-flex">
+                            <div className="dashboard-card attended-requisition-card d-flex flex-column w-100">
                                 <div className="chart-header">
                                     <div>
-                                        <h5>
-                                            Attended Requisitions
-                                        </h5>
-                                        <span>
-                                            Cadre-wise attendance
-                                        </span>
+                                        <h5>Attended Requisitions</h5>
+                                        <span>Cadre-wise attendance</span>
                                     </div>
 
                                     <div className="chart-total green-text">
                                         {attendedTotal}
                                     </div>
                                 </div>
-
 
                                 <div className="pie-content">
                                     <PieChart
@@ -384,7 +429,7 @@ const AdminDashboard = () => {
 
 
                         {/* Not attended by cadre */}
-
+                        {/* 
                         <div className="col-12 col-xl-4">
                             <div className="dashboard-card">
                                 <div className="chart-header">
@@ -413,7 +458,8 @@ const AdminDashboard = () => {
                                     />
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
+
                     </div>
 
 
@@ -792,5 +838,160 @@ const DashboardSkeleton = () => (
     </div>
 
 );
+
+const CourseTypeStackedBarChart = ({
+    data = [],
+    courseTypes = [],
+    cadres = [],
+    colors = CADRE_COLORS,
+}) => {
+
+    const courseTypeMap = data.reduce((acc, item) => {
+
+        if (item?.type) {
+            acc[item.type] = item;
+        }
+
+        return acc;
+
+    }, {});
+
+
+    const maxCount = Math.max(
+        ...courseTypes.map((type) => {
+
+            return courseTypeMap[type]?.count || 0;
+
+        }),
+        1
+    );
+
+
+    return (
+
+        <div className="course-type-chart-wrapper">
+
+            <div className="course-type-y-axis">
+
+                <span>{maxCount}</span>
+                <span>{Math.round(maxCount * 0.75)}</span>
+                <span>{Math.round(maxCount * 0.5)}</span>
+                <span>{Math.round(maxCount * 0.25)}</span>
+                <span>0</span>
+
+            </div>
+
+
+            <div className="course-type-scroll">
+
+                <div
+                    className="course-type-chart"
+                    style={{
+                        "--course-type-count": courseTypes.length,
+                    }}
+                >
+
+                    {courseTypes.map((type) => {
+
+                        const courseTypeData =
+                            courseTypeMap[type];
+
+                        const total =
+                            courseTypeData?.count || 0;
+
+                        const cadreCounts =
+                            courseTypeData?.cadreCounts || {};
+
+
+                        return (
+
+                            <div
+                                className="course-type-bar-item"
+                                key={type}
+                            >
+
+                                <div className="course-type-bar-area">
+
+                                    <div className="course-type-grid-lines">
+                                        <span />
+                                        <span />
+                                        <span />
+                                        <span />
+                                    </div>
+
+
+                                    {total > 0 && (
+
+                                        <div className="course-type-bar">
+
+                                            <div
+                                                className="course-type-bar-value"
+                                            >
+                                                {total}
+                                            </div>
+
+
+                                            {cadres.map((cadre) => {
+
+                                                const value =
+                                                    cadreCounts[cadre] || 0;
+
+                                                if (value <= 0) {
+                                                    return null;
+                                                }
+
+                                                const percentage =
+                                                    (value / maxCount) * 100;
+
+                                                return (
+
+                                                    <div
+                                                        key={cadre}
+                                                        className="course-type-bar-segment"
+                                                        style={{
+                                                            height: `${percentage}%`,
+                                                            backgroundColor:
+                                                                colors[cadre],
+                                                        }}
+                                                        title={`${cadre}: ${value}`}
+                                                    >
+                                                        <span>
+                                                            {value}
+                                                        </span>
+                                                    </div>
+
+                                                );
+
+                                            })}
+
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+
+                                <div
+                                    className="course-type-label"
+                                    title={type}
+                                >
+                                    {type}
+                                </div>
+
+                            </div>
+
+                        );
+
+                    })}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    );
+
+};
 
 export default AdminDashboard;
