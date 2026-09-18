@@ -3,22 +3,23 @@ import Datatable from "../../datatable/Datatable";
 import { useLocation, useNavigate } from "react-router-dom";
 import { addReqAttendance, addReqConfirmation, forwardRequisition, getFeedbackList, getLabMasterData, getRequisitionPrint, getRequisitions, revokeRequisition } from "../../service/training.service";
 import Swal from "sweetalert2";
-import { endOfYear, format, startOfYear } from "date-fns";
+import { format } from "date-fns";
 import { Tooltip } from "react-tooltip";
 import { MdFeedback } from "react-icons/md";
-import { FaEdit, FaInfoCircle, FaUserCheck } from "react-icons/fa";
+import { FaEdit, FaUserCheck } from "react-icons/fa";
 import RequisitionPrint from "../print/requisition";
-import { FaArrowLeft, FaCircleCheck, FaEye, FaForward, FaUsersLine } from "react-icons/fa6";
+import { FaArrowLeft, FaEye, FaForward, FaUsersLine } from "react-icons/fa6";
 import { getEmployees, handleApiError } from "../../service/master.service";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { usePermission } from "../../common/usePermission";
 import RequisitionPreview from "./requisitionPreview";
-import DatePicker from "react-datepicker";
 import Select from "react-select";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
+import { generateFinancialYears, getDefaultFinancialYear } from "../utils/financialYearUtils";
 
 
+export const financialYearOptions = generateFinancialYears();
 
 const Requisition = () => {
 
@@ -27,20 +28,20 @@ const Requisition = () => {
     const location = useLocation();
     const [requisitionList, setRequisitionList] = useState([]);
     const [feedbackList, setFeedbackList] = useState([]);
+
     const navigate = useNavigate();
     const empId = localStorage.getItem("empId");
     const roleName = localStorage.getItem("roleName");
+
     const [showModal, setShowModal] = useState(false);
     const [reqData, setShowReqData] = useState(null);
     const [selectedTab, setSelectedTab] = useState(location.state?.selectedTab || "free");
-    const fromDate = startOfYear(new Date());
-    const toDate = endOfYear(new Date());
-    const [fromDateSel, setFromDateSel] = useState(fromDate);
-    const [toDateSel, setToDateSel] = useState(toDate);
     const [employeeList, setEmployeeList] = useState([]);
     const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showAttendModal, setShowAttendModal] = useState(false);
+
+    const [selectedYearOption, setSelectedYearOption] = useState(() => getDefaultFinancialYear(financialYearOptions));
 
 
     useEffect(() => {
@@ -48,13 +49,18 @@ const Requisition = () => {
     }, []);
 
     useEffect(() => {
-        fetchRequisitions();
-        fetchFeedbacks();
-    }, [fromDateSel, toDateSel, selectedEmployeeId]);
+        if (selectedEmployeeId !== null && selectedEmployeeId !== undefined && selectedYearOption) {
+            fetchRequisitions(selectedEmployeeId, selectedYearOption);
+            fetchFeedbacks();
+        }
+    }, [selectedYearOption, selectedEmployeeId]);
 
-    const fetchRequisitions = async () => {
+    const fetchRequisitions = async (selectedEmpId, selectedYear) => {
         try {
-            const response = await getRequisitions(empId, roleName, format(fromDateSel, "yyyy-MM-dd"), format(toDateSel, "yyyy-MM-dd"), selectedEmployeeId);
+            const fromDate = format(new Date(selectedYear.startYear, 3, 1), 'yyyy-MM-dd');
+            const toDate = format(new Date(selectedYear.endYear, 2, 31), 'yyyy-MM-dd');
+
+            const response = await getRequisitions(empId, roleName, fromDate, toDate, selectedEmpId);
             setRequisitionList(response?.data || []);
         } catch (error) {
             console.error("Error fetching requisitions:", error);
@@ -151,6 +157,10 @@ const Requisition = () => {
         const b = parseInt(color.substring(4, 6), 16);
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
         return brightness > 150 ? "#000" : "#fff";
+    };
+
+    const handleChangeYear = (selectedOption) => {
+        setSelectedYearOption(selectedOption);
     };
 
     const columns = [
@@ -511,7 +521,7 @@ const Requisition = () => {
                     showConfirmButton: false,
                     timer: 1500,
                 });
-                fetchRequisitions();
+                fetchRequisitions(selectedEmployeeId, selectedYearOption);
             } else {
                 Swal.fire("Warning", response.message, "warning");
             }
@@ -541,7 +551,7 @@ const Requisition = () => {
                     showConfirmButton: false,
                     timer: 1500,
                 });
-                fetchRequisitions();
+                fetchRequisitions(selectedEmployeeId, selectedYearOption);
             } else {
                 Swal.fire("Warning", response.message, "warning");
             }
@@ -576,7 +586,7 @@ const Requisition = () => {
                     timer: 2000,
                 });
                 handleConfirmClose();
-                fetchRequisitions();
+                fetchRequisitions(selectedEmployeeId, selectedYearOption);
             } else {
                 Swal.fire("Warning", response.message, "warning");
                 setSubmitting(false);
@@ -608,7 +618,7 @@ const Requisition = () => {
                     timer: 2000,
                 });
                 handleAttendClose();
-                fetchRequisitions();
+                fetchRequisitions(selectedEmployeeId, selectedYearOption);
             } else {
                 Swal.fire("Warning", response.message, "warning");
                 setSubmitting(false);
@@ -648,7 +658,7 @@ const Requisition = () => {
                                 : "btn-light border-0 text-secondary"
                                 }`}
                         >
-                            <span className="fw-bold">Free Requisition</span>
+                            <span className="fw-bold">Requisition : Free Courses</span>
                             <span className={`badge rounded-pill ${selectedTab === "free" ? "bg-dark" : "bg-secondary text-white"}`}>
                                 {freeList.length}
                             </span>
@@ -663,7 +673,7 @@ const Requisition = () => {
                                 : "btn-light border-0 text-secondary"
                                 }`}
                         >
-                            <span className="fw-bold">Paid Requisition</span>
+                            <span className="fw-bold">Requisition : Paid Courses</span>
                             <span className={`badge rounded-pill ${selectedTab === "paid" ? "bg-white text-success" : "bg-secondary text-white"}`}>
                                 {paidList.length}
                             </span>
@@ -697,40 +707,18 @@ const Requisition = () => {
                             />
                         </div>
 
-                        {/* From Date */}
+                        {/* Year Dropdown */}
                         <div className="d-flex align-items-center gap-2">
-                            <label className="fw-bold mb-0 text-nowrap">From :</label>
-                            <DatePicker
-                                selected={fromDateSel}
-                                onChange={(newValue) => setFromDateSel(newValue)}
-                                className="form-control"
-                                placeholderText="From Date"
-                                dateFormat="dd-MM-yyyy"
-                                showYearDropdown
-                                showMonthDropdown
-                                dropdownMode="select"
-                                onKeyDown={(event) => event.preventDefault()}
-                                portalId="root"
-                                popperPlacement="bottom-end"
-                            />
-                        </div>
-
-                        {/* To Date */}
-                        <div className="d-flex align-items-center gap-2">
-                            <label className="fw-bold mb-0 text-nowrap">To :</label>
-                            <DatePicker
-                                selected={toDateSel}
-                                onChange={(newValue) => setToDateSel(newValue)}
-                                className="form-control"
-                                placeholderText="To Date"
-                                dateFormat="dd-MM-yyyy"
-                                showYearDropdown
-                                showMonthDropdown
-                                dropdownMode="select"
-                                onKeyDown={(event) => event.preventDefault()}
-                                portalId="root"
-                                popperPlacement="bottom-end"
-                            />
+                            <label className="fw-bold mb-0 text-nowrap">Year :</label>
+                            <div style={{ width: '180px' }} className="text-start">
+                                <Select
+                                    options={financialYearOptions}
+                                    value={selectedYearOption}
+                                    onChange={handleChangeYear}
+                                    placeholder="Select Year"
+                                    isSearchable={false}
+                                />
+                            </div>
                         </div>
 
                     </div>

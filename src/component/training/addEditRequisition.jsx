@@ -270,7 +270,7 @@ const AddEditRequisition = () => {
         initiatingOfficer: Yup.string().required("Initiating Officer is required"),
         necessity: Yup.string().trim().required("Necessity of course is required"),
         reason: Yup.string().when("modeOfPayment", {
-            is: "OTHERS",
+            is: "Self Payment",
             then: (schema) => schema.required("Reason is required"),
             otherwise: (schema) => schema.nullable()
         }),
@@ -308,7 +308,7 @@ const AddEditRequisition = () => {
         }),
 
         multipartFileBrochure: Yup.mixed().when("modeOfPayment", {
-            is: (value) => value === "ECS" || value === "OTHERS",
+            is: (value) => value === "ECS" || value === "Self Payment",
             then: () =>
                 isEdit
                     ? optionalFileValidation("Brochure file")
@@ -662,10 +662,10 @@ const AddEditRequisition = () => {
                                                 <Field
                                                     type="radio"
                                                     name="modeOfPayment"
-                                                    value="OTHERS"
+                                                    value="Self Payment"
                                                     className="form-check-input me-1"
                                                     onChange={(e) => {
-                                                        setFieldValue("modeOfPayment", "OTHERS");
+                                                        setFieldValue("modeOfPayment", "Self Payment");
 
                                                         // clear ECS files
                                                         setFieldValue("multipartFileEcs", null);
@@ -673,7 +673,7 @@ const AddEditRequisition = () => {
                                                         setFieldValue("multipartFilePan", null);
                                                     }}
                                                 />
-                                                Others
+                                                Self Payment
                                             </label>
 
                                         <label>
@@ -902,7 +902,7 @@ const AddEditRequisition = () => {
                                     </div>
                                 )}
 
-                                {["OTHERS", "NA"].includes(values.modeOfPayment)  && (
+                                {["Self Payment", "NA"].includes(values.modeOfPayment)  && (
                                     <div className="row custom-modal-body text-start p-3">
                                         <div className="col-md-8">
                                             <label className="form-label">Reason</label>

@@ -88,9 +88,9 @@ export const getFormModulesList = async () => {
   }
 };
 
-export const getFormRoleAccessList = async (roleId, formModuleId) => {
+export const getFormRoleAccessList = async (roleName, formModuleId) => {
   try {
-    const payload = { roleId, formModuleId };
+    const payload = { roleName, formModuleId };
     const response = await axios.post(
       `${API_URL}api/admin/form-role-access-list`,
       payload, // Send as JSON object

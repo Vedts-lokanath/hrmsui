@@ -123,6 +123,18 @@ export const getCourseList = async (orgId) => {
     }
 };
 
+export const getCourseListByDateRange = async (orgId, fromDate, toDate) => {
+    try {
+        return (await axios.get(`${API_URL}api/training/course-by-date-range`, {
+            params: { orgId, fromDate, toDate },
+            headers: { 'Content-Type': 'application/json', ...authHeader() }
+        })).data;
+    } catch (error) {
+        console.error('Error occurred in getCourseList():', error);
+        throw error;
+    }
+};
+
 export const getCourseTypeList = async () => {
     try {
         return (await axios.get(`${API_URL}api/training/course-type`, {

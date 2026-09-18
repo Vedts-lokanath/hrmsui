@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Datatable from "../../datatable/Datatable";
 import { getRequisitionApprovals, recommendRequisition, returnRequisition, getApprovedListByEmpId } from "../../service/training.service";
 import Swal from "sweetalert2";
-import { format, startOfYear } from "date-fns";
+import { format } from "date-fns";
 import { FaCheckCircle } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
 import { handleApiError } from "../../service/master.service";
@@ -11,8 +11,12 @@ import { TbArrowBackUp } from "react-icons/tb";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
 import RequisitionPreview from "./requisitionPreview";
-import DatePicker from "react-datepicker";
+import Select from "react-select";
+import { generateFinancialYears, getDefaultFinancialYear } from "../utils/financialYearUtils";
 
+
+
+export const financialYearOptions = generateFinancialYears();
 
 const RequisitionApproval = () => {
 
@@ -24,18 +28,19 @@ const RequisitionApproval = () => {
     const [showModal, setShowModal] = useState(false);
     const [reqData, setShowReqData] = useState(null);
     const [selectedTab, setSelectedTab] = useState("forwarded");
-    const fromDate = startOfYear(new Date());
-    const toDate = new Date();
-    const [fromDateSel, setFromDateSel] = useState(fromDate);
-    const [toDateSel, setToDateSel] = useState(toDate);
-
+    const [selectedYearOption, setSelectedYearOption] = useState(() => getDefaultFinancialYear(financialYearOptions));
 
     useEffect(() => {
         if (employeeId) {
             fetchRequisitionApprovals(employeeId);
-            fetchApprovedList(employeeId);
         }
-    }, [employeeId, fromDateSel, toDateSel]);
+    }, [employeeId]);
+
+    useEffect(() => {
+        if (employeeId && selectedYearOption) {
+            fetchApprovedList(employeeId, selectedYearOption);
+        }
+    }, [employeeId, selectedYearOption]);
 
     const fetchRequisitionApprovals = async (id) => {
         try {
@@ -46,14 +51,22 @@ const RequisitionApproval = () => {
             Swal.fire("Error", "Failed to fetch requisition data. Please try again later.", "error");
         }
     };
-    const fetchApprovedList = async (id) => {
+
+    const fetchApprovedList = async (empId, selectedYear) => {
         try {
-            const response = await getApprovedListByEmpId(id, format(fromDateSel, "yyyy-MM-dd"), format(toDateSel, "yyyy-MM-dd"));
+            const fromDate = format(new Date(selectedYear.startYear, 3, 1), 'yyyy-MM-dd');
+            const toDate = format(new Date(selectedYear.endYear, 2, 31), 'yyyy-MM-dd');
+
+            const response = await getApprovedListByEmpId(empId, fromDate, toDate);
             setApprovedList(response?.data || []);
         } catch (error) {
             console.error("Error fetching approved requisitions:", error);
             Swal.fire("Error", "Failed to fetch approved requisition data. Please try again later.", "error");
         }
+    };
+
+    const handleChangeYear = (selectedOption) => {
+        setSelectedYearOption(selectedOption);
     };
 
     const getTextColor = (bg) => {
@@ -239,7 +252,7 @@ const RequisitionApproval = () => {
                     timer: 1500,
                 });
                 fetchRequisitionApprovals(employeeId);
-                fetchApprovedList(employeeId);
+                fetchApprovedList(employeeId, selectedYearOption);
                 setSelectedTab("approved");
             } else {
                 Swal.fire("Warning", response.message, "warning");
@@ -334,47 +347,20 @@ const RequisitionApproval = () => {
 
                 {/* Right Side Date Filters */}
                 {selectedTab === "approved" && (
-                    <div className="position-absolute top-50 end-0 translate-middle-y d-flex gap-3">
 
-                        <div className="d-flex align-items-center">
-                            <label className="fw-bold me-2 mb-0 text-nowrap">
-                                From :
-                            </label>
-                            <DatePicker
-                                selected={fromDateSel}
-                                onChange={(newValue) => setFromDateSel(newValue)}
-                                className="form-control"
-                                placeholderText="From Date"
-                                dateFormat="dd-MM-yyyy"
-                                showYearDropdown
-                                showMonthDropdown
-                                dropdownMode="select"
-                                onKeyDown={(event) => event.preventDefault()}
-                                portalId="root"
-                                popperPlacement="bottom-end"
+                    <div className="d-flex align-items-end justify-content-end me-3 gap-2">
+                        <label className="fw-bold mb-1 text-nowrap ">Year : </label>
+                        <div style={{ width: '180px' }} className="text-start">
+                            <Select
+                                options={financialYearOptions}
+                                value={selectedYearOption}
+                                onChange={handleChangeYear}
+                                placeholder="Select Year"
+                                isSearchable={false}
                             />
                         </div>
-
-                        <div className="d-flex align-items-center">
-                            <label className="fw-bold me-2 mb-0 text-nowrap">
-                                To :
-                            </label>
-                            <DatePicker
-                                selected={toDateSel}
-                                onChange={(newValue) => setToDateSel(newValue)}
-                                className="form-control"
-                                placeholderText="To Date"
-                                dateFormat="dd-MM-yyyy"
-                                showYearDropdown
-                                showMonthDropdown
-                                dropdownMode="select"
-                                onKeyDown={(event) => event.preventDefault()}
-                                portalId="root"
-                                popperPlacement="bottom-end"
-                            />
-                        </div>
-
                     </div>
+
                 )}
 
             </div>
