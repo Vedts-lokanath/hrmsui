@@ -5,7 +5,6 @@ import RequisitionPreview from "../training/requisitionPreview";
 import { format, startOfYear } from "date-fns";
 import Swal from "sweetalert2";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
-import DatePicker from "react-datepicker";
 import { Tooltip } from "react-tooltip";
 import { FaEye } from "react-icons/fa6";
 import RequisitionPrint from "../print/requisition";
@@ -18,19 +17,15 @@ const SAHRTApprovalList = () => {
     const [showModal, setShowModal] = useState(false);
     const [reqData, setShowReqData] = useState(null);
     const empId = localStorage.getItem("empId");
-    const fromDate = startOfYear(new Date());
-    const toDate = new Date();
-    const [fromDateSel, setFromDateSel] = useState(fromDate);
-    const [toDateSel, setToDateSel] = useState(toDate);
 
 
     useEffect(() => {
         fetchRequsitionApprovedList();
-    }, [fromDateSel, toDateSel]);
+    }, []);
 
     const fetchRequsitionApprovedList = async () => {
         try {
-            const response = await getReqApprovedList(format(fromDateSel, "yyyy-MM-dd"), format(toDateSel, "yyyy-MM-dd"));
+            const response = await getReqApprovedList();
             setRequisitionApprovedList(response?.data || []);
         } catch (error) {
             console.error('Error fetching requisition approved list:', error);
@@ -222,47 +217,6 @@ const SAHRTApprovalList = () => {
                     <span className="pulse-dot"></span>
                 </span>
             </h3>
-            <div className="d-flex gap-3 justify-content-end me-3 flex-wrap">
-                <div className="col-auto">
-                    <div className="d-flex align-items-center">
-                        <label className="fw-bold me-2 mb-0 text-nowrap d-inline-block">
-                            From :
-                        </label>
-                        <DatePicker
-                            selected={fromDateSel}
-                            onChange={(newValue) => setFromDateSel(newValue)}
-                            className="form-control"
-                            placeholderText="From Date"
-                            dateFormat="dd-MM-yyyy"
-                            showYearDropdown
-                            showMonthDropdown
-                            dropdownMode="select"
-                            onKeyDown={(event) => event.preventDefault()}
-                            wrapperClassName="d-inline-block"
-                        />
-                    </div>
-                </div>
-
-                <div className="col-auto">
-                    <div className="d-flex align-items-center">
-                        <label className="fw-bold me-2 mb-0 text-nowrap d-inline-block">
-                            To :
-                        </label>
-                        <DatePicker
-                            selected={toDateSel}
-                            onChange={(newValue) => setToDateSel(newValue)}
-                            className="form-control"
-                            placeholderText="To Date"
-                            dateFormat="dd-MM-yyyy"
-                            showYearDropdown
-                            showMonthDropdown
-                            dropdownMode="select"
-                            onKeyDown={(event) => event.preventDefault()}
-                            wrapperClassName="d-inline-block"
-                        />
-                    </div>
-                </div>
-            </div>
 
             <div id="card-body" className="p-2 mt-2">
                 {<Datatable columns={columns} data={mappedData()} />}

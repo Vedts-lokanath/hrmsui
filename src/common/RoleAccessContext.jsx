@@ -7,17 +7,17 @@ export const RoleAccessProvider = ({ children }) => {
 
     const [permissions, setPermissions] = useState([]);
 
-    const roleId = localStorage.getItem("roleId");
+    const roleName = localStorage.getItem("roleName");
 
     useEffect(() => {
-        if (roleId) {
-            fetchPermissions(roleId);
+        if (roleName) {
+            fetchPermissions(roleName);
         }
-    }, [roleId]);
+    }, [roleName]);
 
-    const fetchPermissions = async (roleId) => {
+    const fetchPermissions = async (role) => {
         try {
-            const res = await getFormRoleAccessList(roleId,"0");
+            const res = await getFormRoleAccessList(role,"0");
             setPermissions(res || []);
         } catch (error) {
             console.error("Permission fetch error", error);

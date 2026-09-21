@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import Datatable from "../../datatable/Datatable";
 import { useNavigate } from "react-router-dom";
-import { acceptReqFeedback, feedbackFileDownload, getFeedbackList, getFeedbackListByDateRange, getFeedbackPrint, getLabMasterData } from "../../service/training.service";
+import { acceptReqFeedback, feedbackFileDownload, getFeedbackListByDateRange, getFeedbackPrint, getLabMasterData } from "../../service/training.service";
 import Swal from "sweetalert2";
-import { endOfYear, format, startOfYear } from "date-fns";
+import { format } from "date-fns";
 import { Tooltip } from "react-tooltip";
 import FeedbackPrint from "../print/feedbackPrint";
 import { FaDownload, FaEye } from "react-icons/fa6";
@@ -13,17 +13,16 @@ import Select from "react-select";
 import { MdLibraryAddCheck } from "react-icons/md";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { usePermission } from "../../common/usePermission";
-import DatePicker from "react-datepicker";
+import { generateFinancialYears, getDefaultFinancialYear } from "../utils/financialYearUtils";
 
+
+export const financialYearOptions = generateFinancialYears();
 
 const FeedbackList = () => {
 
     const { canView, canAdd, canEdit, canDelete } = usePermission("FeedBack");
 
-    const fromDate = startOfYear(new Date());
-    const toDate = endOfYear(new Date());
-    const [fromDateSel, setFromDateSel] = useState(fromDate);
-    const [toDateSel, setToDateSel] = useState(toDate);
+    const [selectedYearOption, setSelectedYearOption] = useState(() => getDefaultFinancialYear(financialYearOptions));
 
     const [feedbackList, setFeedbackList] = useState([]);
     const [employeeList, setEmployeeList] = useState([]);
@@ -42,12 +41,12 @@ const FeedbackList = () => {
     }, []);
 
     useEffect(() => {
-        if (selectedEmpId !== null && selectedEmpId !== undefined && fromDateSel && toDateSel) {
-            fetchFeedbackData(selectedEmpId, format(fromDateSel, "yyyy-MM-dd"), format(toDateSel, "yyyy-MM-dd"));
+        if (selectedEmpId !== null && selectedEmpId !== undefined && selectedYearOption) {
+            fetchFeedbackData(selectedEmpId, selectedYearOption);
         }
-    }, [selectedEmpId, fromDateSel, toDateSel]);
+    }, [selectedEmpId, selectedYearOption]);
 
-    const fetchFeedbackData = async (employeeId, fromDate, toDate) => {
+    const fetchFeedbackData = async (employeeId, selectedYear) => {
         let apiEmpId = employeeId;
         let apiRole = roleName;
 
@@ -64,6 +63,9 @@ const FeedbackList = () => {
         }
 
         try {
+            const fromDate = format(new Date(selectedYear.startYear, 3, 1), 'yyyy-MM-dd');
+            const toDate = format(new Date(selectedYear.endYear, 2, 31), 'yyyy-MM-dd');
+
             const response = await getFeedbackListByDateRange(apiEmpId, apiRole, fromDate, toDate);
             setFeedbackList(response?.data || []);
         } catch (error) {
@@ -78,6 +80,10 @@ const FeedbackList = () => {
         } catch (error) {
             console.error("Error fetching employees:", error);
         }
+    };
+
+    const handleChangeYear = (selectedOption) => {
+        setSelectedYearOption(selectedOption);
     };
 
     const columns = [
@@ -246,7 +252,7 @@ const FeedbackList = () => {
                     showConfirmButton: false,
                     timer: 2000,
                 });
-                fetchFeedbackData(selectedEmpId, format(fromDateSel, "yyyy-MM-dd"), format(toDateSel, "yyyy-MM-dd"));
+                fetchFeedbackData(selectedEmpId, selectedYearOption);
             } else {
                 Swal.fire("Warning", response.message, "warning");
             }
@@ -310,40 +316,17 @@ const FeedbackList = () => {
                     />
                 </div>
 
-                {/* From Date */}
-                <div className="d-flex align-items-center gap-2">
-                    <label className="fw-bold mb-0 text-nowrap">From :</label>
-                    <DatePicker
-                        selected={fromDateSel}
-                        onChange={(newValue) => setFromDateSel(newValue)}
-                        className="form-control"
-                        placeholderText="From Date"
-                        dateFormat="dd-MM-yyyy"
-                        showYearDropdown
-                        showMonthDropdown
-                        dropdownMode="select"
-                        onKeyDown={(event) => event.preventDefault()}
-                        portalId="root"
-                        popperPlacement="bottom-end"
-                    />
-                </div>
-
-                {/* To Date */}
-                <div className="d-flex align-items-center gap-2">
-                    <label className="fw-bold mb-0 text-nowrap">To :</label>
-                    <DatePicker
-                        selected={toDateSel}
-                        onChange={(newValue) => setToDateSel(newValue)}
-                        className="form-control"
-                        placeholderText="To Date"
-                        dateFormat="dd-MM-yyyy"
-                        showYearDropdown
-                        showMonthDropdown
-                        dropdownMode="select"
-                        onKeyDown={(event) => event.preventDefault()}
-                        portalId="root"
-                        popperPlacement="bottom-end"
-                    />
+                <div className="d-flex align-items-end justify-content-end me-3 gap-2">
+                    <label className="fw-bold mb-1 text-nowrap ">Year : </label>
+                    <div style={{ width: '180px' }} className="text-start">
+                        <Select
+                            options={financialYearOptions}
+                            value={selectedYearOption}
+                            onChange={handleChangeYear}
+                            placeholder="Select Year"
+                            isSearchable={false}
+                        />
+                    </div>
                 </div>
 
             </div>

@@ -88,9 +88,9 @@ export const getFormModulesList = async () => {
   }
 };
 
-export const getFormRoleAccessList = async (roleId, formModuleId) => {
+export const getFormRoleAccessList = async (roleName, formModuleId) => {
   try {
-    const payload = { roleId, formModuleId };
+    const payload = { roleName, formModuleId };
     const response = await axios.post(
       `${API_URL}api/admin/form-role-access-list`,
       payload, // Send as JSON object
@@ -274,3 +274,30 @@ export const updateCashLimit = async (id, cashLimit) => {
     throw error;
   }
 };
+
+export const getUserManual = async () => {
+  try {
+    const response = await axios.get(`${API_URL}api/admin/user-manual`, {
+      headers: { ...authHeader() },
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    console.error('getUserManual error:', error);
+    throw error;
+  }
+};
+
+export const getWorkflow = async () => {
+  try {
+    const response = await axios.get(`${API_URL}api/admin/work-flow`, {
+      headers: { ...authHeader() },
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    console.error('getWorkflow error:', error);
+    throw error;
+  }
+};
+

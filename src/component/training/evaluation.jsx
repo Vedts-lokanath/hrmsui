@@ -6,27 +6,16 @@ import Select from "react-select";
 import Swal from "sweetalert2";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { addEvaluation, getEvaluationList, getEvaluationPrint, getLabMasterData, getRequisitions } from "../../service/training.service";
-import { format } from "date-fns";
+import { format, getYear, parseISO } from "date-fns";
 import "./Training.css";
 import { FaArrowRight } from "react-icons/fa";
 import { FaFilePdf } from "react-icons/fa6";
 import EvaluationPrint from "../print/evaluation";
-import DatePicker from "react-datepicker";
+import { generateFinancialYears, getDefaultFinancialYear } from "../utils/financialYearUtils";
+import config from "../../environment/config";
 
 
-export const getFinancialYearRange = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-
-    const startYear = month >= 3 ? year : year - 1;
-
-    return {
-        startDate: new Date(startYear, 3, 1),
-        endDate: new Date(startYear + 1, 2, 31),
-    };
-};
-
+export const financialYearOptions = generateFinancialYears();
 
 const Evaluation = () => {
 
@@ -35,18 +24,17 @@ const Evaluation = () => {
     const [requisitionList, setRequisitionList] = useState([]);
     const [evaluationList, setEvaluationList] = useState([]);
 
+    const [selectedYearOption, setSelectedYearOption] = useState(() => getDefaultFinancialYear(financialYearOptions));
+
     const roleName = localStorage.getItem("roleName");
     const empId = localStorage.getItem("empId");
     const title = localStorage.getItem("title");
     const salutation = localStorage.getItem("salutation");
     const empName = localStorage.getItem("empName");
     const designationCode = localStorage.getItem("designationCode");
+    const labCode = config.LABCODE;
 
     const [empData, setEmpData] = useState(null);
-
-    const { startDate, endDate } = getFinancialYearRange();
-    const [fromDate, setFromDate] = useState(startDate || new Date());
-    const [toDate, setToDate] = useState(endDate || new Date());
 
     const [searchText, setSearchText] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -57,18 +45,18 @@ const Evaluation = () => {
     }, []);
 
     useEffect(() => {
-        if (fromDate && toDate) {
-            fetchEvaluations(fromDate, toDate);
-            fetchRequisitions(fromDate, toDate);
+        if (selectedYearOption) {
+            fetchEvaluations(selectedYearOption);
+            fetchRequisitions(selectedYearOption);
         }
-    }, [fromDate, toDate]);
+    }, [selectedYearOption]);
 
-    const fetchEvaluations = async (from, to) => {
+    const fetchEvaluations = async (selectedYear) => {
         try {
-            if (!from || !to) return;
-            const formatFromDate = format(from, "yyyy-MM-dd");
-            const formatToDate = format(to, "yyyy-MM-dd");
-            const response = await getEvaluationList(formatFromDate, formatToDate);
+            const fromDate = format(new Date(selectedYear.startYear, 3, 1), 'yyyy-MM-dd');
+            const toDate = format(new Date(selectedYear.endYear, 2, 31), 'yyyy-MM-dd');
+
+            const response = await getEvaluationList(fromDate, toDate);
             setEvaluationList(response?.data || []);
         } catch (error) {
             console.error("Error fetching evaluation:", error);
@@ -76,12 +64,12 @@ const Evaluation = () => {
         }
     };
 
-    const fetchRequisitions = async (from, to) => {
+    const fetchRequisitions = async (selectedYear) => {
         try {
-            if (!from || !to) return;
-            const formatFromDate = format(from, "yyyy-MM-dd");
-            const formatToDate = format(to, "yyyy-MM-dd");
-            const response = await getRequisitions(empId, roleName, formatFromDate, formatToDate, 0);
+            const fromDate = format(new Date(selectedYear.startYear, 3, 1), 'yyyy-MM-dd');
+            const toDate = format(new Date(selectedYear.endYear, 2, 31), 'yyyy-MM-dd');
+
+            const response = await getRequisitions(empId, roleName, fromDate, toDate, 0);
             setRequisitionList(response?.data || []);
         } catch (error) {
             console.error("Error fetching requisitions:", error);
@@ -95,6 +83,11 @@ const Evaluation = () => {
         } catch (error) {
             console.error("Error fetching employees:", error);
         }
+    };
+
+
+    const handleChangeYear = (selectedOption) => {
+        setSelectedYearOption(selectedOption);
     };
 
     const [initialValues, setInitialValues] = useState({
@@ -120,7 +113,11 @@ const Evaluation = () => {
             if (!confirm) {
                 return;
             }
-            const response = await addEvaluation(values);
+            const dto = {
+                ...values,
+                preparedBy: empId
+            }
+            const response = await addEvaluation(dto);
             if (response && response.success) {
                 Swal.fire({
                     title: "Success",
@@ -131,7 +128,7 @@ const Evaluation = () => {
                 });
                 resetForm();
                 setShowModal(false);
-                fetchEvaluations(fromDate, toDate);
+                fetchEvaluations(selectedYearOption);
             } else {
                 Swal.fire("Warning", response.message, "warning");
             }
@@ -167,10 +164,23 @@ const Evaluation = () => {
     );
 
     const requisitionMap = new Map();
+
     (requisitionList || [])
-        .filter(r => r.status === "CO" || r.status === "FA")
+        .filter(r => {
+            const isValidStatus = (r.status === "CO" || r.status === "FA") && r.isAttend === "Y";
+            if (!isValidStatus) return false;
+
+            if (labCode === "CAIR" && r.fromDate) {
+                const year = getYear(parseISO(r.fromDate));
+                if (year <= 2025) {
+                    return false;
+                }
+            }
+
+            return true;
+        })
         .forEach(r => {
-            if (!requisitionMap.has(r.initiatingOfficer) && (r.status === "CO" || r.status === "FA")) {
+            if (!requisitionMap.has(r.initiatingOfficer)) {
                 requisitionMap.set(r.initiatingOfficer, []);
             }
 
@@ -363,36 +373,22 @@ const Evaluation = () => {
                         />
                     </div>
 
-                    <div className="col-md-6 col-lg-8 d-flex justify-content-md-end mt-2 mt-md-0">
-                        <div className="col-md-3 mb-3 me-2">
-                            <DatePicker
-                                selected={fromDate}
-                                onChange={(date) => setFromDate(date)}
-                                className="form-control"
-                                dateFormat="dd-MM-yyyy"
-                                showYearDropdown
-                                showMonthDropdown
-                                dropdownMode="select"
-                                placeholderText="From Date"
-                                onKeyDown={(event) => event.preventDefault()}
-                            />
-                        </div>
-
-                        <div className="col-md-3 mb-3">
-                            <DatePicker
-                                selected={toDate}
-                                onChange={(date) => setToDate(date)}
-                                className="form-control"
-                                dateFormat="dd-MM-yyyy"
-                                minDate={fromDate}
-                                showYearDropdown
-                                showMonthDropdown
-                                dropdownMode="select"
-                                placeholderText="To Date"
-                                onKeyDown={(event) => event.preventDefault()}
+                    <div className="d-flex align-items-end justify-content-end me-3 gap-2">
+                        <label className="fw-bold mb-1 text-nowrap ">Year : </label>
+                        <div style={{ width: '180px' }} className="text-start">
+                            <Select
+                                options={financialYearOptions}
+                                value={selectedYearOption}
+                                onChange={handleChangeYear}
+                                placeholder="Select Year"
+                                isSearchable={false}
+                                styles={{
+                                    menuPortal: base => ({ ...base, zIndex: 9999 })
+                                }}
                             />
                         </div>
                     </div>
+
                 </div>
 
                 <div className="row">
@@ -427,7 +423,7 @@ const Evaluation = () => {
                                                 <div className={`impact-badge impact-${prog.impact}`}>
                                                     {getImpactLabel(prog.impact)}
                                                 </div>
-                                            ) : roleName === "ROLE_DH" ? (
+                                            ) : ["ROLE_DH", "ROLE_GH"].includes(roleName) ? (
                                                 <button
                                                     className="btn btn-sm btn-secondary"
                                                     onClick={() => handleAddImpact(emp, prog)}

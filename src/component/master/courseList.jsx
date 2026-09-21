@@ -1,23 +1,20 @@
 import { useEffect, useState } from "react";
 import Datatable from "../../datatable/Datatable";
-import { addEligible, addProgram, editProgram, getAgencies, getCourseList, getCourseTypeList, getEligibilities } from "../../service/training.service";
+import { getAgencies, getCourseList, getCourseListByDateRange } from "../../service/training.service";
 import Swal from "sweetalert2";
-import { format, set } from "date-fns";
 import { Tooltip } from "react-tooltip";
-import { ErrorMessage, Field, Form, Formik } from "formik";
-import DatePicker from "react-datepicker";
-import * as Yup from "yup";
 import Select from "react-select";
-import AlertConfirmation from "../../common/AlertConfirmation.component";
-import { handleApiError } from "../../service/master.service";
 import { FaEdit } from "react-icons/fa";
-import { useRef } from "react";
 import { usePermission } from "../../common/usePermission";
 import { useLocation, useNavigate } from "react-router-dom";
 import CourseModal from "./courseModal";
+import { format } from 'date-fns';
+import { generateFinancialYears, getDefaultFinancialYear } from "../utils/financialYearUtils";
 
 
-const ProgramList = () => {
+export const financialYearOptions = generateFinancialYears();
+
+const CourseList = () => {
 
     const { canView, canAdd, canEdit, canDelete } = usePermission("Course");
 
@@ -29,8 +26,8 @@ const ProgramList = () => {
     const [showProgramModal, setShowProgramModal] = useState(false);
     const [agencyList, setAgencyList] = useState([]);
     const [editData, setEditData] = useState();
-    const formikRef = useRef(null);
     const [selectedOrgId, setSelectedOrgId] = useState(stateOrgId ?? 0);
+    const [selectedYearOption, setSelectedYearOption] = useState(() => getDefaultFinancialYear(financialYearOptions));
 
 
     useEffect(() => {
@@ -54,15 +51,22 @@ const ProgramList = () => {
         }
     }, []);
 
-    useEffect(() => {
-        if (selectedOrgId !== null && selectedOrgId !== undefined) {
-            fetchCourseData(selectedOrgId);
-        }
-    }, [selectedOrgId]);
+    const handleChangeYear = (selectedOption) => {
+        setSelectedYearOption(selectedOption);
+    };
 
-    const fetchCourseData = async (orgId) => {
+    useEffect(() => {
+        if (selectedOrgId !== null && selectedOrgId !== undefined && selectedYearOption) {
+            fetchCourseData(selectedOrgId, selectedYearOption);
+        }
+    }, [selectedOrgId, selectedYearOption]);
+
+    const fetchCourseData = async (orgId, selectedYear) => {
         try {
-            const response = await getCourseList(orgId);
+            const fromDate = format(new Date(selectedYear.startYear, 3, 1), 'yyyy-MM-dd');
+            const toDate = format(new Date(selectedYear.endYear, 2, 31), 'yyyy-MM-dd');
+
+            const response = await getCourseListByDateRange(orgId, fromDate, toDate);
             setFilterOrganizeList(response?.data || []);
         } catch (error) {
             console.error("Error fetching programs:", error);
@@ -150,22 +154,39 @@ const ProgramList = () => {
                 </span>
             </h3>
 
-            <div className="d-flex justify-content-end align-items-center flex-wrap">
-                <div className="d-flex align-items-center me-3 mb-2">
+            <div className="d-flex flex-wrap align-items-end justify-content-end gap-3 ms-auto me-3">
+
+                {/* Organizer Dropdown */}
+                <div className="d-flex align-items-center gap-2">
                     <label className="font-label fw-bold me-3 mb-0">Organizer :</label>
-                    <div style={{ width: '400px' }} className="text-start">
+                    <div style={{ width: '300px' }} className="text-start">
                         <Select
                             options={organizerOptions}
                             value={organizerOptions.find((item) => item.value === selectedOrgId) || null}
                             onChange={(selectedOption) => {
-                                const selectedValue = selectedOption ? selectedOption.value : 0; // default to 0
-                                handleChangeOrganizer(selectedValue);
+                                const selectedValue = selectedOption ? selectedOption.value : 0;
+                                setSelectedOrgId(selectedValue);
                             }}
                             placeholder="Select Organizer"
                             isSearchable
                         />
                     </div>
                 </div>
+
+                {/* Year Dropdown */}
+                <div className="d-flex align-items-center gap-2">
+                    <label className="fw-bold mb-0 text-nowrap">Year :</label>
+                    <div style={{ width: '180px' }} className="text-start">
+                        <Select
+                            options={financialYearOptions}
+                            value={selectedYearOption}
+                            onChange={handleChangeYear}
+                            placeholder="Select Year"
+                            isSearchable={false}
+                        />
+                    </div>
+                </div>
+
             </div>
 
             <div id="card-body" className="p-2 mt-2">
@@ -197,4 +218,4 @@ const ProgramList = () => {
     );
 }
 
-export default ProgramList;
+export default CourseList;

@@ -5,7 +5,6 @@ import Dashboard from "../component/dashboard/dashboard";
 import Employee from "../component/master/Employee";
 import Designation from "../component/master/designation";
 import Division from "../component/master/division";
-import ProgramList from "../component/master/programList";
 import OrganizerList from "../component/master/organizerList";
 import UserManagerList from "../component/admin/userMangerList";
 import FormRoleAccess from "../component/admin/roleAccess";
@@ -42,6 +41,7 @@ import CashLimit from "../component/admin/cashLimit.jsx";
 import SAHRTApprovalList from "../component/approval/saHrtApprovalLIst.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import Layout from "./Layout.jsx";
+import CourseList from "../component/master/courseList.jsx";
 
 
 function AppRoutes() {
@@ -152,7 +152,7 @@ function AppRoutes() {
           <Route path="/employee" element={<Employee />} />
           <Route path="/designation" element={<Designation />} />
           <Route path="/division" element={<Division />} />
-          <Route path="/course" element={<ProgramList />} />
+          <Route path="/course" element={<CourseList />} />
           <Route path="/organizer" element={<OrganizerList />} />
           <Route path="/users" element={<UserManagerList />} />
           <Route path="/roleaccess" element={<FormRoleAccess />} />

@@ -98,32 +98,32 @@ const Transaction = () => {
     };
 
     const commonSteps = [
-        { code: "AA", label: "Created by user" },
-        { code: "AR", label: "Recommended by DH" },
-        { code: "AG", label: "Recommended by GH" },
-        { code: "AS", label: "Verified By SA-HRT" },
-        { code: "AV", label: "Approved by AD-HRT" },
+        { code: "AA", label: "Creation by user" },
+        { code: "AR", label: "Recommendation by DH" },
+        { code: "AG", label: "Recommendation by GH" },
+        { code: "AS", label: "Verification By SA-HRT" },
+        { code: "AV", label: "Approval by AD-HRT" },
         { code: "CO", label: "Approved By Director" }
     ];
 
     const paidBaseSteps = [
-        { code: "AA", label: "Created by user" },
-        { code: "AR", label: "Recommended by DH" },
-        { code: "AG", label: "Recommended by GH" },
-        { code: "AS", label: "Verified By SA-HRT" },
+        { code: "AA", label: "Creation by user" },
+        { code: "AR", label: "Recommendation by DH" },
+        { code: "AG", label: "Recommendation by GH" },
+        { code: "AS", label: "Verification By SA-HRT" },
         { code: "CA", label: "Checked By CAG" },
-        { code: "AV", label: "Approved by AD-HRT" },
+        { code: "AV", label: "Approval by AD-HRT" },
         { code: "CO", label: "Approved By Director" }
     ];
 
     const financeSteps = [
-        { code: "AA", label: "Created by user" },
-        { code: "AR", label: "Recommended by DH" },
-        { code: "AG", label: "Recommended by GH" },
-        { code: "AS", label: "Verified By SA-HRT" },
+        { code: "AA", label: "Creation by user" },
+        { code: "AR", label: "Recommendation by DH" },
+        { code: "AG", label: "Recommendation by GH" },
+        { code: "AS", label: "Verification By SA-HRT" },
         { code: "CA", label: "Checked By CAG" },
-        { code: "AV", label: "Approved by AD-HRT" },
-        { code: "DA", label: "Approved By Director" },
+        { code: "AV", label: "Approval by AD-HRT" },
+        { code: "DA", label: "Recommend to DFA" },
         { code: "FC", label: "Financial Concurrence By DFA" },
         { code: "FA", label: "Final Approved By Director" }
     ];
