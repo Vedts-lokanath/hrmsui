@@ -208,7 +208,7 @@ const RequisitionPreview = ({ reqData, setShowModal }) => {
                                         </div>
                                     )}
 
-                                    {["OTHERS", "NA"].includes(reqData.modeOfPayment) && (
+                                    {["Self Payment", "NA"].includes(reqData.modeOfPayment) && (
                                         <div className="rp-mixed">
                                             <div className="rp-reason">
                                                 <span className="rp-kv__label">Reason</span>
