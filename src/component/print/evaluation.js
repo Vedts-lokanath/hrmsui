@@ -143,7 +143,7 @@ export const EvaluationPrint = (evData, empName, labData) => {
                         margin: [0, 40, 0, 0],
                         stack: [
                             {
-                                text: empName || "",
+                                text: evData?.preparedByEmpName || "",
                                 bold: true,
                                 color: "#0d47a1",
                             },

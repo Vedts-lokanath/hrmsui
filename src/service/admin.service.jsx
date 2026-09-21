@@ -274,3 +274,30 @@ export const updateCashLimit = async (id, cashLimit) => {
     throw error;
   }
 };
+
+export const getUserManual = async () => {
+  try {
+    const response = await axios.get(`${API_URL}api/admin/user-manual`, {
+      headers: { ...authHeader() },
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    console.error('getUserManual error:', error);
+    throw error;
+  }
+};
+
+export const getWorkflow = async () => {
+  try {
+    const response = await axios.get(`${API_URL}api/admin/work-flow`, {
+      headers: { ...authHeader() },
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    console.error('getWorkflow error:', error);
+    throw error;
+  }
+};
+

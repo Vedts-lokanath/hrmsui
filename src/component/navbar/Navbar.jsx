@@ -22,6 +22,8 @@ import {
   getHeaderModuleList,
   getNotifiCount,
   getNotifiList,
+  getUserManual,
+  getWorkflow,
   updateNotification,
 } from "../../service/admin.service";
 import * as FaIcons from "react-icons/fa6";
@@ -33,9 +35,11 @@ import {
 import Swal from "sweetalert2";
 import { BsFileEarmarkText, BsFillBoxSeamFill } from "react-icons/bs";
 import {
+  MdOutlineAccountTree,
   MdOutlineChangeCircle,
   MdOutlineFactCheck,
   MdOutlineFingerprint,
+  MdOutlineMenuBook,
 } from "react-icons/md";
 import { IoAppsSharp } from "react-icons/io5";
 import { Tooltip } from "bootstrap";
@@ -73,7 +77,7 @@ const Navbar = () => {
   const encryptedUser = btoa(user.username);
 
   const currentRoleName = roleName.split("_").slice(1).join("-");
-  
+
   const [selectedRole, setSelectedRole] = useState(null);
 
   const [appUrls, setAppUrls] = useState({});
@@ -121,6 +125,8 @@ const Navbar = () => {
       changeRole: "Change Role",
       changePassword: "Change Password",
       auditStamping: "Audit Stamping",
+      userManual: "User Manual",
+      workFlow: "Work Flow",
 
       // Notification Panel
       notificationPanel: "Notifications",
@@ -168,6 +174,8 @@ const Navbar = () => {
       changeRole: "भूमिका बदलें",
       changePassword: "पासवर्ड बदलें",
       auditStamping: "लेखा-परीक्षण मुद्रांकन",
+      userManual: "उपयोगकर्ता पुस्तिका",
+      workFlow: "काम का तरीका",
 
       // Notification Panel
       notificationPanel: "सूचनाएँ",
@@ -203,9 +211,7 @@ const Navbar = () => {
   const LABCODE = config.LABCODE;
 
   const roles = JSON.parse(localStorage.getItem("roles") || []);
-const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
-
-
+  const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
 
 
   const roleOptions = roles.map((item) => ({
@@ -275,7 +281,7 @@ const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
   };
 
   const formatName = () => {
-    const cleanTitle = salutation && salutation !== "null"  ? language === "en"  ? salutation : hindiSalutation : title && title !== "null" ? language === "en" ? title  : hindiTitle && hindiTitle!="null" ?  hindiTitle : "" : "";
+    const cleanTitle = salutation && salutation !== "null" ? language === "en" ? salutation : hindiSalutation : title && title !== "null" ? language === "en" ? title : hindiTitle && hindiTitle != "null" ? hindiTitle : "" : "";
     const cleanName =
       empName && empName !== "null"
         ? language === "en"
@@ -290,6 +296,29 @@ const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
     return `${cleanTitle} ${cleanName}`.trim() + cleanDesignation;
   };
 
+  const openUserManual = async () => {
+    try {
+      const blob = await getUserManual();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error('Error opening user manual:', error);
+      Swal.fire({ icon: 'error', text: 'Failed to open user manual', confirmButtonText: 'OK' });
+    }
+  };
+
+
+  const openWorkFlow = async () => {
+    try {
+      const blob = await getWorkflow();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error('Error opening workflow:', error);
+      Swal.fire({ icon: 'error', text: 'Failed to open workflow', confirmButtonText: 'OK' });
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selectedRole || selectedRole?.value === roleName) {
       showAlert("Please change the Role Before Submit.", null, "warning", null);
@@ -300,9 +329,9 @@ const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
       message: "",
     });
     if (confirm) {
-          
+
       localStorage.setItem("roleName", selectedRole?.value);
-      localStorage.setItem("hindiRoleName", roleMap[selectedRole.value]);   
+      localStorage.setItem("hindiRoleName", roleMap[selectedRole.value]);
       navigate("/dashboard");
       showAlert(null, "Role Change Successfull!", "success", null);
       handleRoleClose();
@@ -314,19 +343,19 @@ const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
   }, []);
 
   const fetchAppUrls = async () => {
-        try {
-            const urls = await getReactAppUrls();
-            const urlMap = {};
-            urls.forEach(app => {
-                if (app.isActive === 1) {
-                    urlMap[app.appCode] = app.appUrl;
-                }
-            });
-            setAppUrls(urlMap);
-        } catch (error) {
-            console.error("Failed to fetch app URLs:", error);
+    try {
+      const urls = await getReactAppUrls();
+      const urlMap = {};
+      urls.forEach(app => {
+        if (app.isActive === 1) {
+          urlMap[app.appCode] = app.appUrl;
         }
-    };
+      });
+      setAppUrls(urlMap);
+    } catch (error) {
+      console.error("Failed to fetch app URLs:", error);
+    }
+  };
 
   const apps = [
     {
@@ -401,122 +430,122 @@ const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
   }));
 
   const handleAppLaunch = async (app) => {
-        setIsLauncherOpen(false);
+    setIsLauncherOpen(false);
 
-        // Synchronous open prevents browser popup blockers
-        const needsNewTab = app.action === 'open' || app.url !== '/under-development';
-        const pendingWindow = needsNewTab ? window.open('', '_blank') : null;
+    // Synchronous open prevents browser popup blockers
+    const needsNewTab = app.action === 'open' || app.url !== '/under-development';
+    const pendingWindow = needsNewTab ? window.open('', '_blank') : null;
 
-        const hasAccess = await checkUserProjectAccess(app.code);
-        if (!hasAccess) {
-            pendingWindow?.close();
+    const hasAccess = await checkUserProjectAccess(app.code);
+    if (!hasAccess) {
+      pendingWindow?.close();
+      Swal.fire({
+        title: 'Access Denied',
+        text: `You do not have access to ${app.code} application.`,
+        icon: 'error',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Okay',
+        footer: '<span>Contact System Admin if you need access.</span>',
+        showClass: {
+          popup: 'animate__animated animate__fadeInDown'
+        },
+        hideClass: {
+          popup: 'animate__animated animate__fadeOutUp'
+        }
+      });
+      return;
+    }
+
+    const targetUrl = app.url;
+
+    if (app.action === 'open') {
+      const userData = localStorage.getItem("user");
+      if (!userData) {
+        pendingWindow?.close();
+        return;
+      }
+
+      if (pendingWindow) {
+        pendingWindow.location.href = `${targetUrl}/${app.launchpath}?${app.code.toLowerCase()}=true`;
+      }
+
+      // Handshake State (Scoped to this specific launch)
+      let delivered = false;
+      let attempts = 0;
+      const maxAttempts = 10;
+      let checkInterval;
+
+      // 1. Listen for the child's acknowledgment
+      const onAck = (event) => {
+        // Security: Validate origin strictly
+        if (event.origin !== new URL(targetUrl).origin) return;
+
+        if (event.data?.type === "LOGIN_ACK") {
+          delivered = true;
+          clearInterval(checkInterval);
+          window.removeEventListener("message", onAck);
+        }
+      };
+
+      window.addEventListener("message", onAck);
+
+      // 2. Poll the child window until acknowledged or timed out
+      checkInterval = setInterval(() => {
+        attempts++;
+
+        if (delivered || attempts > maxAttempts || !pendingWindow || pendingWindow.closed) {
+          clearInterval(checkInterval);
+          window.removeEventListener("message", onAck);
+
+          if (!delivered && attempts > maxAttempts) {
             Swal.fire({
-                title: 'Access Denied',
-                text: `You do not have access to ${app.code} application.`,
-                icon: 'error',
-                confirmButtonColor: '#3085d6',
-                confirmButtonText: 'Okay',
-                footer: '<span>Contact System Admin if you need access.</span>',
-                showClass: {
-                    popup: 'animate__animated animate__fadeInDown'
-                },
-                hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp'
-                }
+              title: 'Sign-in Failed',
+              text: `Could not complete sign-in to ${app.code}. Please try again.`,
+              icon: 'error',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Okay',
+              showClass: {
+                popup: 'animate__animated animate__fadeInDown'
+              },
+              hideClass: {
+                popup: 'animate__animated animate__fadeOutUp'
+              }
             });
-            return;
+            // showAuthError(`Could not complete sign-in to ${app.code}. Please try again.`);
+          }
+          return;
         }
 
-        const targetUrl = app.url;
-
-        if (app.action === 'open') {
-            const userData = localStorage.getItem("user");
-            if (!userData) {
-                pendingWindow?.close();
-                return;
-            }
-
-            if (pendingWindow) {
-                pendingWindow.location.href = `${targetUrl}/${app.launchpath}?${app.code.toLowerCase()}=true`;
-            }
-
-            // Handshake State (Scoped to this specific launch)
-            let delivered = false;
-            let attempts = 0;
-            const maxAttempts = 10;
-            let checkInterval;
-
-            // 1. Listen for the child's acknowledgment
-            const onAck = (event) => {
-                // Security: Validate origin strictly
-                if (event.origin !== new URL(targetUrl).origin) return;
-                
-                if (event.data?.type === "LOGIN_ACK") {
-                    delivered = true;
-                    clearInterval(checkInterval);
-                    window.removeEventListener("message", onAck);
-                }
-            };
-
-            window.addEventListener("message", onAck);
-
-            // 2. Poll the child window until acknowledged or timed out
-            checkInterval = setInterval(() => {
-                attempts++;
-                
-                if (delivered || attempts > maxAttempts || !pendingWindow || pendingWindow.closed) {
-                    clearInterval(checkInterval);
-                    window.removeEventListener("message", onAck);
-                    
-                    if (!delivered && attempts > maxAttempts) {
-                        Swal.fire({
-                            title: 'Sign-in Failed',
-                            text: `Could not complete sign-in to ${app.code}. Please try again.`,
-                            icon: 'error',
-                            confirmButtonColor: '#3085d6',
-                            confirmButtonText: 'Okay',
-                            showClass: {
-                                popup: 'animate__animated animate__fadeInDown'
-                            },
-                            hideClass: {
-                                popup: 'animate__animated animate__fadeOutUp'
-                            }
-                        });
-                        // showAuthError(`Could not complete sign-in to ${app.code}. Please try again.`);
-                    }
-                    return;
-                }
-
-                // 3. Send the payload
-                try {
-                    pendingWindow.postMessage(
-                    { type: "LOGIN_SUCCESS", user: JSON.parse(userData)},
-                    targetUrl
-                    );
-                } catch (e) {
-                    // Window may have been closed or navigating, safely ignore
-                }
-            }, 1000);
-        } else if (targetUrl === '/under-development') {
-            pendingWindow?.close();
-            window.location.href = targetUrl;
-        } else if (pendingWindow) {
-            pendingWindow.opener = null;
-            pendingWindow.location.href = app.url;
+        // 3. Send the payload
+        try {
+          pendingWindow.postMessage(
+            { type: "LOGIN_SUCCESS", user: JSON.parse(userData) },
+            targetUrl
+          );
+        } catch (e) {
+          // Window may have been closed or navigating, safely ignore
         }
+      }, 1000);
+    } else if (targetUrl === '/under-development') {
+      pendingWindow?.close();
+      window.location.href = targetUrl;
+    } else if (pendingWindow) {
+      pendingWindow.opener = null;
+      pendingWindow.location.href = app.url;
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Close if the click is not on the launcher button or the dropdown
+      if (isLauncherOpen && !event.target.closest(`.launcher-btn`) && !event.target.closest(`.app-launcher-dropdown`)) {
+        setIsLauncherOpen(false);
+      }
     };
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            // Close if the click is not on the launcher button or the dropdown
-            if (isLauncherOpen && !event.target.closest(`.launcher-btn`) && !event.target.closest(`.app-launcher-dropdown`)) {
-                setIsLauncherOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isLauncherOpen]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isLauncherOpen]);
 
 
   useEffect(() => {
@@ -547,11 +576,11 @@ const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
 
       const hindiRoleMap = {};
 
-      roles.forEach((role, i) => {hindiRoleMap[role] = hindiRoles[i];});
+      roles.forEach((role, i) => { hindiRoleMap[role] = hindiRoles[i]; });
 
       if (userData?.data) {
         localStorage.setItem("roles", JSON.stringify(userData.data.roleNames));
-         localStorage.setItem("hindiRoleMap", JSON.stringify(hindiRoleMap));
+        localStorage.setItem("hindiRoleMap", JSON.stringify(hindiRoleMap));
 
         setShowRoleModal(true);
       }
@@ -641,27 +670,27 @@ const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
 
               <li>
                 {" "}
-               <div
-                className="language-tooltip-wrapper"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              marginRight: "15px"
-            }}
-          >
-            <span onClick={toggleLanguage} className="languageWrapper">
-              <svg className= "svgBold" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 64 64" fill="none">
-                <path d="M37.6672 9.95973V31.9997H34.4272V9.95973H31.5071V7.11973H41.8271V9.95973H37.6672ZM22.5871 6.71973C24.6671 6.71973 26.2538 7.23973 27.3471 8.27973C28.4671 9.31973 29.0271 10.6264 29.0271 12.1997C29.0271 13.3464 28.7205 14.3864 28.1071 15.3197C27.5205 16.2264 26.6405 16.9464 25.4671 17.4797C24.2938 18.0131 22.8271 18.3064 21.0671 18.3597L20.8671 15.5597C22.6805 15.5064 23.9605 15.1864 24.7071 14.5997C25.4805 14.0131 25.8671 13.2264 25.8671 12.2397C25.8671 11.2797 25.5471 10.5864 24.9071 10.1597C24.2938 9.73306 23.5738 9.51973 22.7471 9.51973C21.7605 9.51973 20.8671 9.65306 20.0671 9.91973C19.2671 10.1864 18.4138 10.5464 17.5071 10.9997L16.5071 8.23973C17.2005 7.86639 18.0538 7.51973 19.0671 7.19973C20.1071 6.87973 21.2805 6.71973 22.5871 6.71973ZM29.4671 23.2797C29.4671 24.5064 29.1871 25.5331 28.6271 26.3597C28.0671 27.1864 27.3071 27.7997 26.3471 28.1997C25.4138 28.5997 24.3471 28.7997 23.1471 28.7997C21.6271 28.7997 20.2138 28.4264 18.9071 27.6797C17.6271 26.9331 16.4005 25.7464 15.2271 24.1197C14.0805 22.4931 12.9471 20.3731 11.8271 17.7597L14.6671 16.7197C15.4405 18.6131 16.2405 20.2531 17.0671 21.6397C17.9205 22.9997 18.8271 24.0531 19.7871 24.7997C20.7471 25.5197 21.7738 25.8797 22.8671 25.8797C23.8805 25.8797 24.7071 25.6531 25.3471 25.1997C25.9871 24.7197 26.3071 23.9597 26.3071 22.9197C26.3071 21.6397 25.8671 20.5331 24.9871 19.5997C24.1071 18.6664 23.0405 17.8131 21.7871 17.0397L24.1471 16.9197L25.8671 16.5597C26.2405 16.8797 26.6538 17.2664 27.1071 17.7197C27.5605 18.1731 27.9205 18.6264 28.1871 19.0797L28.3872 19.8397C28.7338 20.3464 29.0005 20.8797 29.1871 21.4397C29.3738 21.9997 29.4671 22.6131 29.4671 23.2797ZM30.1071 17.9997C31.3871 17.9997 32.4938 17.9064 33.4272 17.7197C34.3605 17.5064 35.4538 17.1731 36.7071 16.7197V19.5997C35.5605 20.1064 34.5205 20.4397 33.5871 20.5997C32.6805 20.7597 31.6805 20.8397 30.5871 20.8397C30.1871 20.8397 29.7205 20.8131 29.1871 20.7597C28.6538 20.6797 28.1471 20.5997 27.6671 20.5197C27.2138 20.4131 26.8805 20.3197 26.6671 20.2397L24.7871 17.9997L25.0271 17.3997C25.8005 17.5864 26.6138 17.7331 27.4671 17.8397C28.3205 17.9464 29.2005 17.9997 30.1071 17.9997Z" fill="#ffffff"></path>
-                <path d="M52.3467 58.6664L49.136 50.4158H38.5707L35.3973 58.6664H32L42.416 31.8984H45.44L55.8187 58.6664H52.3467ZM48.128 47.4291L45.1413 39.3651C45.0667 39.1659 44.9421 38.8051 44.768 38.2824C44.5939 37.7598 44.4195 37.2246 44.2453 36.6771C44.096 36.1046 43.9715 35.6691 43.872 35.3704C43.6728 36.1419 43.4613 36.9011 43.2373 37.6478C43.0381 38.3696 42.864 38.9419 42.7147 39.3651L39.6907 47.4291H48.128Z" fill="#ffffff"></path>
-              </svg>
-            </span>
-             <span className="language-tooltip">
+                <div
+                  className="language-tooltip-wrapper"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    marginRight: "15px"
+                  }}
+                >
+                  <span onClick={toggleLanguage} className="languageWrapper">
+                    <svg className="svgBold" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 64 64" fill="none">
+                      <path d="M37.6672 9.95973V31.9997H34.4272V9.95973H31.5071V7.11973H41.8271V9.95973H37.6672ZM22.5871 6.71973C24.6671 6.71973 26.2538 7.23973 27.3471 8.27973C28.4671 9.31973 29.0271 10.6264 29.0271 12.1997C29.0271 13.3464 28.7205 14.3864 28.1071 15.3197C27.5205 16.2264 26.6405 16.9464 25.4671 17.4797C24.2938 18.0131 22.8271 18.3064 21.0671 18.3597L20.8671 15.5597C22.6805 15.5064 23.9605 15.1864 24.7071 14.5997C25.4805 14.0131 25.8671 13.2264 25.8671 12.2397C25.8671 11.2797 25.5471 10.5864 24.9071 10.1597C24.2938 9.73306 23.5738 9.51973 22.7471 9.51973C21.7605 9.51973 20.8671 9.65306 20.0671 9.91973C19.2671 10.1864 18.4138 10.5464 17.5071 10.9997L16.5071 8.23973C17.2005 7.86639 18.0538 7.51973 19.0671 7.19973C20.1071 6.87973 21.2805 6.71973 22.5871 6.71973ZM29.4671 23.2797C29.4671 24.5064 29.1871 25.5331 28.6271 26.3597C28.0671 27.1864 27.3071 27.7997 26.3471 28.1997C25.4138 28.5997 24.3471 28.7997 23.1471 28.7997C21.6271 28.7997 20.2138 28.4264 18.9071 27.6797C17.6271 26.9331 16.4005 25.7464 15.2271 24.1197C14.0805 22.4931 12.9471 20.3731 11.8271 17.7597L14.6671 16.7197C15.4405 18.6131 16.2405 20.2531 17.0671 21.6397C17.9205 22.9997 18.8271 24.0531 19.7871 24.7997C20.7471 25.5197 21.7738 25.8797 22.8671 25.8797C23.8805 25.8797 24.7071 25.6531 25.3471 25.1997C25.9871 24.7197 26.3071 23.9597 26.3071 22.9197C26.3071 21.6397 25.8671 20.5331 24.9871 19.5997C24.1071 18.6664 23.0405 17.8131 21.7871 17.0397L24.1471 16.9197L25.8671 16.5597C26.2405 16.8797 26.6538 17.2664 27.1071 17.7197C27.5605 18.1731 27.9205 18.6264 28.1871 19.0797L28.3872 19.8397C28.7338 20.3464 29.0005 20.8797 29.1871 21.4397C29.3738 21.9997 29.4671 22.6131 29.4671 23.2797ZM30.1071 17.9997C31.3871 17.9997 32.4938 17.9064 33.4272 17.7197C34.3605 17.5064 35.4538 17.1731 36.7071 16.7197V19.5997C35.5605 20.1064 34.5205 20.4397 33.5871 20.5997C32.6805 20.7597 31.6805 20.8397 30.5871 20.8397C30.1871 20.8397 29.7205 20.8131 29.1871 20.7597C28.6538 20.6797 28.1471 20.5997 27.6671 20.5197C27.2138 20.4131 26.8805 20.3197 26.6671 20.2397L24.7871 17.9997L25.0271 17.3997C25.8005 17.5864 26.6138 17.7331 27.4671 17.8397C28.3205 17.9464 29.2005 17.9997 30.1071 17.9997Z" fill="#ffffff"></path>
+                      <path d="M52.3467 58.6664L49.136 50.4158H38.5707L35.3973 58.6664H32L42.416 31.8984H45.44L55.8187 58.6664H52.3467ZM48.128 47.4291L45.1413 39.3651C45.0667 39.1659 44.9421 38.8051 44.768 38.2824C44.5939 37.7598 44.4195 37.2246 44.2453 36.6771C44.096 36.1046 43.9715 35.6691 43.872 35.3704C43.6728 36.1419 43.4613 36.9011 43.2373 37.6478C43.0381 38.3696 42.864 38.9419 42.7147 39.3651L39.6907 47.4291H48.128Z" fill="#ffffff"></path>
+                    </svg>
+                  </span>
+                  <span className="language-tooltip">
                     {language === "en" ? "Change Language" : "भाषा बदलें"}
                   </span>
-          </div>
+                </div>
 
-                  
-              
+
+
               </li>
 
               <li className="nav-item dropdown">
@@ -730,19 +759,6 @@ const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
                 );
               })}
 
-              {/* <li className="nav-item dropdown">
-                                <a href="/dashboard" className="nav-link nav-animate" onClick={(e) => e.preventDefault()}>
-                                    <FaHSquare className="icon-name" /> Help
-                                    <FaCaretDown className="arrow-down" />
-                                </a>
-                                <ul className="dropdown-menu mt-2">
-                                    <li>
-                                        <a className="dropdown-item" href='#' onClick={changePassword}>
-                                            Change Password
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li> */}
 
               <li className="nav-item dropdown me-3">
                 <a href="#" className="nav-link nav-animate">
@@ -865,6 +881,27 @@ const roleMap = JSON.parse(localStorage.getItem("hindiRoleMap"));
                     >
                       <MdOutlineFingerprint className="ms-0 me-3" size={20} />{" "}
                       {t.auditStamping}
+                    </button>
+                  </li>
+                  <li className="dropdown-item">
+                    <button
+                      type="button"
+                      className="dropdown-item"
+                      onClick={openUserManual}
+                    >
+                      <MdOutlineMenuBook className="ms-0 me-3" size={20} />
+                      {t.userManual}
+                    </button>
+                  </li>
+
+                  <li className="dropdown-item">
+                    <button
+                      type="button"
+                      className="dropdown-item"
+                      onClick={openWorkFlow}
+                    >
+                      <MdOutlineAccountTree className="ms-0 me-3" size={20} />
+                      {t.workFlow}
                     </button>
                   </li>
                   <li className="dropdown-item">

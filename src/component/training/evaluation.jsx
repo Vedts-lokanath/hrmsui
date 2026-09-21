@@ -113,7 +113,11 @@ const Evaluation = () => {
             if (!confirm) {
                 return;
             }
-            const response = await addEvaluation(values);
+            const dto = {
+                ...values,
+                preparedBy: empId
+            }
+            const response = await addEvaluation(dto);
             if (response && response.success) {
                 Swal.fire({
                     title: "Success",
@@ -163,7 +167,7 @@ const Evaluation = () => {
 
     (requisitionList || [])
         .filter(r => {
-            const isValidStatus = r.status === "CO" || r.status === "FA";
+            const isValidStatus = (r.status === "CO" || r.status === "FA") && r.isAttend === "Y";
             if (!isValidStatus) return false;
 
             if (labCode === "CAIR" && r.fromDate) {
@@ -378,7 +382,6 @@ const Evaluation = () => {
                                 onChange={handleChangeYear}
                                 placeholder="Select Year"
                                 isSearchable={false}
-                                menuPortalTarget={document.body}
                                 styles={{
                                     menuPortal: base => ({ ...base, zIndex: 9999 })
                                 }}
@@ -420,7 +423,7 @@ const Evaluation = () => {
                                                 <div className={`impact-badge impact-${prog.impact}`}>
                                                     {getImpactLabel(prog.impact)}
                                                 </div>
-                                            ) : roleName === "ROLE_DH" ? (
+                                            ) : ["ROLE_DH", "ROLE_GH"].includes(roleName) ? (
                                                 <button
                                                     className="btn btn-sm btn-secondary"
                                                     onClick={() => handleAddImpact(emp, prog)}
