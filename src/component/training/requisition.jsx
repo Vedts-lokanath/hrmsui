@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Datatable from "../../datatable/Datatable";
 import { useLocation, useNavigate } from "react-router-dom";
-import { addReqAttendance, addReqConfirmation, forwardRequisition, getFeedbackList, getLabMasterData, getRequisitionPrint, getRequisitions, revokeRequisition } from "../../service/training.service";
+import { addReqAttendance, addReqConfirmation, forwardRequisition, getFeedbackList, getFeedbackListByDateRange, getLabMasterData, getRequisitionPrint, getRequisitions, revokeRequisition } from "../../service/training.service";
 import Swal from "sweetalert2";
 import { format } from "date-fns";
 import { Tooltip } from "react-tooltip";
@@ -51,7 +51,7 @@ const Requisition = () => {
     useEffect(() => {
         if (selectedEmployeeId !== null && selectedEmployeeId !== undefined && selectedYearOption) {
             fetchRequisitions(selectedEmployeeId, selectedYearOption);
-            fetchFeedbacks();
+            fetchFeedbacks(selectedYearOption);
         }
     }, [selectedYearOption, selectedEmployeeId]);
 
@@ -68,7 +68,7 @@ const Requisition = () => {
         }
     };
 
-    const fetchFeedbacks = async () => {
+    const fetchFeedbacks = async (selectedYear) => {
         let apiEmpId = 0;
         let apiRole = roleName;
 
@@ -82,7 +82,10 @@ const Requisition = () => {
         }
 
         try {
-            const response = await getFeedbackList(apiEmpId, apiRole);
+            const fromDate = format(new Date(selectedYear.startYear, 3, 1), 'yyyy-MM-dd');
+            const toDate = format(new Date(selectedYear.endYear, 2, 31), 'yyyy-MM-dd');
+
+            const response = await getFeedbackListByDateRange(apiEmpId, apiRole, fromDate, toDate);
             setFeedbackList(response?.data || []);
         } catch (error) {
             console.error("Error fetching requisitions:", error);

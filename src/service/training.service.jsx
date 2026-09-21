@@ -455,13 +455,11 @@ export const feedbackFileDownload = async (feedId, type) => {
 };
 
 
-export const getReqApprovedList = async (fromDate, toDate) => {
+export const getReqApprovedList = async () => {
     try {
         return (await axios.get(`${API_URL}api/training/req-sa-approved-list`, {
             params: {
                 empId: localStorage.getItem("empId"),
-                fromDate: fromDate,
-                toDate: toDate
             },
             headers: { 'Content-Type': 'application/json', ...authHeader() }
         })).data;
@@ -471,13 +469,11 @@ export const getReqApprovedList = async (fromDate, toDate) => {
     }
 };
 
-export const getReqDirectorApprovedList = async (fromDate, toDate) => {
+export const getReqDirectorApprovedList = async () => {
     try {
         return (await axios.get(`${API_URL}api/training/req-dir-approved-list`, {
             params: {
                 empId: localStorage.getItem("empId"),
-                fromDate: fromDate,
-                toDate: toDate
             },
             headers: { 'Content-Type': 'application/json', ...authHeader() }
         })).data;

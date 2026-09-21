@@ -123,7 +123,7 @@ const Transaction = () => {
         { code: "AS", label: "Verification By SA-HRT" },
         { code: "CA", label: "Checked By CAG" },
         { code: "AV", label: "Approval by AD-HRT" },
-        { code: "DA", label: "Approved By Director" },
+        { code: "DA", label: "Recommend to DFA" },
         { code: "FC", label: "Financial Concurrence By DFA" },
         { code: "FA", label: "Final Approved By Director" }
     ];
