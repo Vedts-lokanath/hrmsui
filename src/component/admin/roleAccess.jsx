@@ -40,11 +40,11 @@ const FormRoleAccess = () => {
       const defaultRole =
         roleOptions.find((r) => r.label && r.label.toLowerCase() === "role_admin") ||
         (roleOptions.length > 0 ? roleOptions[0] : null);
-      //console.log('Default Role:', defaultRole);
+
       const defaultModule = { value: 0, label: "All" };
 
       const formRoleAccessList = await getFormRoleAccessList(
-        defaultRole?.value,
+        defaultRole?.label,
         defaultModule.value
       );
       setFormRoleAccessList(formRoleAccessList);
@@ -59,10 +59,11 @@ const FormRoleAccess = () => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, []);
 
   const handleSubmit = async (values) => {
     const { selectedRole, selectedFormModule } = values;
+
     try {
       const formRoleAccessList = await getFormRoleAccessList(
         selectedRole,
@@ -75,13 +76,28 @@ const FormRoleAccess = () => {
   };
 
   const handleFieldChange = async (field, option, values) => {
-    const value = option?.value;
-    const newValues = { ...values, [field]: value };
+    const newValues = { ...values, [field]: option };
     const { selectedRole, selectedFormModule } = newValues;
-    const updatedValues = { selectedRole: selectedRole?.value ?? selectedRole, selectedFormModule: selectedFormModule?.value ?? selectedFormModule }
+
+    const roleId =
+      typeof selectedRole === "object" && selectedRole !== null
+        ? selectedRole.value
+        : selectedRole;
+    const matchedRole = roleListForOptions.find((r) => r.value === roleId);
+
+    const moduleId =
+      typeof selectedFormModule === "object" && selectedFormModule !== null
+        ? selectedFormModule.value
+        : selectedFormModule;
+
+    const updatedValues = {
+      selectedRole: matchedRole?.label ?? null,
+      selectedFormModule: moduleId ?? 0,
+    };
 
     await handleSubmit(updatedValues);
   };
+
 
   const handleSwitchChange = async (
     index,
@@ -121,20 +137,28 @@ const FormRoleAccess = () => {
         selectedRole1
       );
 
-      // const updatedList = [...formRoleAccessList];
-      // updatedList[index] = {
-      //   ...item,
-      //   active: newIsActive,
-      //   forView: newForView,
-      //   forAdd: newForAdd,
-      //   forEdit: newForEdit,
-      //   forDelete: newForDelete
-      // };
-
       const { selectedRole, selectedFormModule } = values;
-      const updatedValues = { selectedRole: selectedRole?.value ?? selectedRole, selectedFormModule: selectedFormModule?.value ?? selectedFormModule }
 
-      const updatedList = await getFormRoleAccessList(updatedValues?.selectedRole, updatedValues?.selectedFormModule);
+      const roleId =
+        typeof selectedRole === "object" && selectedRole !== null
+          ? selectedRole.value
+          : selectedRole;
+      const matchedRole = roleListForOptions.find((r) => r.value === roleId);
+
+      const moduleId =
+        typeof selectedFormModule === "object" && selectedFormModule !== null
+          ? selectedFormModule.value
+          : selectedFormModule;
+
+      const updatedValues = {
+        selectedRole: matchedRole?.label ?? null,
+        selectedFormModule: moduleId ?? 0,
+      };
+
+      const updatedList = await getFormRoleAccessList(
+        updatedValues.selectedRole,
+        updatedValues.selectedFormModule
+      );
       setFormRoleAccessList(updatedList);
     } catch (error) {
       console.error("Error updating form role access:", error);

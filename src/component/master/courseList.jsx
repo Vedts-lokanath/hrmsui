@@ -210,6 +210,7 @@ const CourseList = () => {
                     editData={editData}
                     setEditData={setEditData}
                     selectedOrgId={selectedOrgId}
+                    selectedYear={selectedYearOption}
                     fetchCourseData={fetchCourseData}
                 />
             )}

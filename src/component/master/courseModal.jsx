@@ -11,10 +11,9 @@ import { handleApiError } from "../../service/master.service";
 
 
 const CourseModal = ({ showProgramModal, setShowProgramModal, editData, setEditData,
-    selectedOrgId, fetchCourseData, setCourseData, fetchPrograms }) => {
+    selectedOrgId, selectedYear, fetchCourseData, setCourseData, fetchPrograms }) => {
 
 
-    const [filterOrganizeList, setFilterOrganizeList] = useState([]);
     const [eligibilityList, setEligibilityList] = useState([]);
     const [agencyList, setAgencyList] = useState([]);
     const formikRef = useRef(null);
@@ -169,7 +168,7 @@ const CourseModal = ({ showProgramModal, setShowProgramModal, editData, setEditD
                 });
                 handleClose();
                 resetForm();
-                fetchCourseData?.(selectedOrgId);
+                fetchCourseData?.(selectedOrgId, selectedYear);
                 setCourseData?.(response.data);
                 fetchPrograms?.();
             } else {
