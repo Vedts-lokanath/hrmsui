@@ -265,13 +265,19 @@ const Navbar = () => {
 
   const gotoNoti = async (event, item) => {
     event.preventDefault();
+
     try {
       const response = await updateNotification(item.notificationId);
-      if (response === 200) {
-        const notifiList = await getNotifiList();
-        const notifiCount = await getNotifiCount();
+
+      if (response.success) {
+        const [notifiList, notifiCount] = await Promise.all([
+          getNotifiList(),
+          getNotifiCount()
+        ]);
+
         setNotifiCount(notifiCount);
         setNotifiList(notifiList);
+
         const url = item.notificationUrl;
         navigate(`/${url}`);
       }
@@ -279,6 +285,8 @@ const Navbar = () => {
       console.error("Error updating notification:", error);
     }
   };
+
+
 
   const formatName = () => {
     const cleanTitle = salutation && salutation !== "null" ? language === "en" ? salutation : hindiSalutation : title && title !== "null" ? language === "en" ? title : hindiTitle && hindiTitle != "null" ? hindiTitle : "" : "";
