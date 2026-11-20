@@ -5,8 +5,8 @@ import { getEmployees, handleApiError } from "../../service/master.service";
 import Select from "react-select";
 import Swal from "sweetalert2";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
-import { addEvaluation, getEvaluationList, getEvaluationPrint, getLabMasterData, getRequisitions } from "../../service/training.service";
-import { format, getYear, isBefore, parseISO } from "date-fns";
+import { addEvaluation, getAllTypeRequisitions, getEvaluationList, getEvaluationPrint, getLabMasterData } from "../../service/training.service";
+import { format, isBefore, parseISO } from "date-fns";
 import "./Training.css";
 import { FaArrowRight } from "react-icons/fa";
 import { FaFilePdf } from "react-icons/fa6";
@@ -69,7 +69,7 @@ const Evaluation = () => {
             const fromDate = format(new Date(selectedYear.startYear, 3, 1), 'yyyy-MM-dd');
             const toDate = format(new Date(selectedYear.endYear, 2, 31), 'yyyy-MM-dd');
 
-            const response = await getRequisitions(empId, roleName, fromDate, toDate, 0);
+            const response = await getAllTypeRequisitions(empId, roleName, fromDate, toDate, 0);
             setRequisitionList(response?.data || []);
         } catch (error) {
             console.error("Error fetching requisitions:", error);
@@ -167,15 +167,8 @@ const Evaluation = () => {
 
     (requisitionList || [])
         .filter(r => {
-            const isValidStatus = (r.status === "CO" || r.status === "FA") && r.isAttend === "Y";
+            const isValidStatus = (r.status === "CO" || r.status === "FA" || r.status === "PA") && r.isAttend === "Y";
             if (!isValidStatus) return false;
-
-            // if (labCode === "CAIR" && r.fromDate) {
-            //     const year = getYear(parseISO(r.fromDate));
-            //     if (year <= 2025) {
-            //         return false;
-            //     }
-            // }
 
             if (labCode === "CAIR" && r.fromDate) {
                 if (isBefore(parseISO(r.fromDate), parseISO("2026-04-01"))) {

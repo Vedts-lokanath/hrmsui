@@ -196,6 +196,18 @@ export const getRequisitions = async (empId, roleName, fromDate, toDate, selecte
     }
 };
 
+export const getAllTypeRequisitions = async (empId, roleName, fromDate, toDate, selectedEmployeeId) => {
+    try {
+        return (await axios.get(`${API_URL}api/training/all-type-requisition`, {
+            params: { empId, roleName, fromDate, toDate, selectedEmployeeId },
+            headers: { 'Content-Type': 'application/json', ...authHeader() }
+        })).data;
+    } catch (error) {
+        console.error('Error occurred in getRequisitions():', error);
+        throw error;
+    }
+};
+
 export const getRequisitionById = async (id) => {
     try {
         return (await axios.get(`${API_URL}api/training/requisition/${id}`, { headers: { 'Content-Type': 'application/json', ...authHeader() } })).data;
@@ -710,10 +722,10 @@ export const editJournalData = async (data) => {
 };
 
 
-export const getMandatoryTrainingList = async (empId, roleName) => {
+export const getMandatoryTrainingList = async (empId, roleName, fromDate, toDate, selectedEmployeeId) => {
     try {
         const response = await axios.get(`${API_URL}api/training/mandatory-training`, {
-            params: { empId, roleName },
+            params: { empId, roleName, fromDate, toDate, selectedEmployeeId },
             headers: {
                 'Content-Type': 'application/json',
                 ...authHeader()

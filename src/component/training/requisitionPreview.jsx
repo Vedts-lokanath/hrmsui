@@ -1,5 +1,5 @@
 import Swal from "sweetalert2";
-import { reqFileDownload } from "../../service/training.service";
+import { courseBrochureFileDownload, reqFileDownload } from "../../service/training.service";
 import { format } from "date-fns";
 import "./RequisitionPreview.css";
 
@@ -83,6 +83,36 @@ const RequisitionPreview = ({ reqData, setShowModal }) => {
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
+        }
+    };
+
+    const handleCourseBrochurePreview = async (courseId) => {
+        try {
+            const response = await courseBrochureFileDownload(courseId);
+            const { data, fileName, contentType } = response;
+
+            if (data === '0') {
+                Swal.fire("Error", "File not found", "error");
+                return;
+            }
+
+            const blob = new Blob([data], { type: contentType });
+            const url = window.URL.createObjectURL(blob);
+
+            if (contentType === "application/pdf") {
+                window.open(url, "_blank");
+            } else {
+                const link = document.createElement("a");
+                link.href = url;
+                link.setAttribute("download", fileName);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            }
+        } catch (error) {
+            console.error("Course brochure preview failed:", error);
+            Swal.fire("Preview Failed", "Unable to preview the course brochure. Please try again.", "error");
         }
     };
 
@@ -216,6 +246,16 @@ const RequisitionPreview = ({ reqData, setShowModal }) => {
                                             </div>
                                             <FileChip label="Brochure" fileName={reqData.fileBrochure}
                                                 onClick={() => handleDownload(reqData.requisitionId, reqData.fileBrochure)} />
+                                        </div>
+                                    )}
+
+                                    {reqData.courseBrochureName && reqData.courseId && (
+                                        <div className="rp-files rp-files--top">
+                                            <FileChip
+                                                label="Course Brochure"
+                                                fileName={reqData.courseBrochureName.replace(/^\d+_/, "")}
+                                                onClick={() => handleCourseBrochurePreview(reqData.courseId)}
+                                            />
                                         </div>
                                     )}
 
