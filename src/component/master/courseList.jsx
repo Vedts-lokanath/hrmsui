@@ -86,7 +86,7 @@ const CourseList = () => {
         { name: "To Date", selector: (row) => row.toDate, sortable: true, align: 'text-center' },
         { name: "Offline Fee (₹)", selector: (row) => row.offlineRegistrationFee, sortable: true, align: 'text-center' },
         { name: "Online Fee (₹)", selector: (row) => row.onlineRegistrationFee, sortable: true, align: 'text-center' },
-        ...(canEdit ? [{ name: "Action", selector: (row) => row.action, sortable: false, align: "text-center", }] : [])
+        { name: "Action", selector: (row) => row.action, sortable: false, align: "text-center" }
     ];
 
     const mappedData = () => {
@@ -105,15 +105,17 @@ const CourseList = () => {
             action: (
                 <>
                     <Tooltip id="Tooltip" className='text-white' />
-                    <button
-                        className="btn btn-sm btn-warning me-2"
-                        onClick={() => handleEdit(item)}
-                        data-tooltip-id="Tooltip"
-                        data-tooltip-content="Edit"
-                        data-tooltip-place="top"
-                    >
-                        <FaEdit className="fs-6" />
-                    </button>
+                    {canEdit && (
+                        <button
+                            className="btn btn-sm btn-warning me-2"
+                            onClick={() => handleEdit(item)}
+                            data-tooltip-id="Tooltip"
+                            data-tooltip-content="Edit"
+                            data-tooltip-place="top"
+                        >
+                            <FaEdit className="fs-6" />
+                        </button>
+                    )}
                     {item.brochureName && (
                         <button
                             className="btn btn-sm btn-success me-2"

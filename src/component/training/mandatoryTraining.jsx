@@ -5,15 +5,20 @@ import { Tooltip } from "react-tooltip";
 import { FaEdit } from "react-icons/fa";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { acceptMandatoryTraining, addReqAttendance, getMandatoryTrainingList } from "../../service/training.service";
-import { MdLibraryAddCheck } from "react-icons/md";
+import { acceptMandatoryTraining, addReqAttendance, getFeedbackListByDateRange, getMandatoryTrainingList } from "../../service/training.service";
+import { MdFeedback, MdLibraryAddCheck } from "react-icons/md";
 import Swal from "sweetalert2";
-import { handleApiError } from "../../service/master.service";
+import { getEmployees, handleApiError } from "../../service/master.service";
 import AlertConfirmation from "../../common/AlertConfirmation.component";
 import { FaUsersLine } from "react-icons/fa6";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
+import { generateFinancialYears, getDefaultFinancialYear } from "../utils/financialYearUtils";
+import Select from "react-select";
 
+
+
+export const financialYearOptions = generateFinancialYears();
 
 const MandatoryTraining = () => {
 
@@ -21,24 +26,124 @@ const MandatoryTraining = () => {
 
     const navigate = useNavigate();
     const [trainingList, setTrainingList] = useState([]);
+    const [feedbackList, setFeedbackList] = useState([]);
+    const [employeeList, setEmployeeList] = useState([]);
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
+
+    const [selectedYearOption, setSelectedYearOption] = useState(() => getDefaultFinancialYear(financialYearOptions));
+
     const empId = localStorage.getItem("empId");
     const roleName = localStorage.getItem("roleName");
+
     const [showAttendModal, setShowAttendModal] = useState(false);
     const [reqData, setShowReqData] = useState(null);
 
     useEffect(() => {
-        if (empId && roleName) {
-            fetchMandatoryTrainings(empId, roleName);
+        if (selectedEmployeeId !== null && selectedEmployeeId !== undefined && selectedYearOption) {
+            fetchMandatoryTrainings(selectedEmployeeId, selectedYearOption);
+            fetchFeedbacks(selectedYearOption);
         }
-    }, [empId, roleName]);
+    }, [selectedEmployeeId, selectedYearOption]);
 
 
-    const fetchMandatoryTrainings = async (id, role) => {
+    useEffect(() => {
+        fetchEmployees();
+    }, []);
+
+    const fetchMandatoryTrainings = async (selectedEmpId, selectedYear) => {
         try {
-            const response = await getMandatoryTrainingList(id, role);
+
+            const fromDate = format(new Date(selectedYear.startYear, 3, 1), 'yyyy-MM-dd');
+            const toDate = format(new Date(selectedYear.endYear, 2, 31), 'yyyy-MM-dd');
+
+            const response = await getMandatoryTrainingList(empId, roleName, fromDate, toDate, selectedEmpId);
             setTrainingList(response?.data || []);
         } catch (error) {
             console.error("Error fetching mandatory trainings:", error);
+        }
+    };
+
+    const fetchFeedbacks = async (selectedYear) => {
+        let apiEmpId = 0;
+        let apiRole = roleName;
+
+        if (roleName !== "ROLE_USER") {
+            apiRole = "ROLE_ADMIN";
+        }
+
+        if (roleName === "ROLE_USER") {
+            apiEmpId = empId;
+            apiRole = roleName;
+        }
+
+        try {
+            const fromDate = format(new Date(selectedYear.startYear, 3, 1), 'yyyy-MM-dd');
+            const toDate = format(new Date(selectedYear.endYear, 2, 31), 'yyyy-MM-dd');
+
+            const response = await getFeedbackListByDateRange(apiEmpId, apiRole, fromDate, toDate);
+            setFeedbackList(response?.data || []);
+        } catch (error) {
+            console.error("Error fetching requisitions:", error);
+        }
+    };
+
+    const fetchEmployees = async () => {
+        try {
+            const roleToPass = ["ROLE_ADMIN", "ROLE_DH", "ROLE_GH"].includes(roleName) ? roleName : "ROLE_ADMIN";
+            const response = await getEmployees(empId, roleToPass);
+            const res = response?.data || [];
+
+            const employeeOptions = res.map((e) => ({
+                value: e.empId,
+                label: `${e.empName}, ${e.empDesigName}`,
+                divisionId: e.divisionId,
+            }));
+
+
+            setEmployeeList(employeeOptions);
+
+            if (!["ROLE_USER"].includes(roleName)) {
+                setEmployeeList([
+                    {
+                        value: 0,
+                        label: "ALL",
+                        divisionId: null,
+                    },
+                    ...employeeOptions,
+                ]);
+                setSelectedEmployeeId(0);
+
+            } else if (roleName === "ROLE_DH") {
+                setEmployeeList(employeeOptions);
+
+                const exists = employeeOptions.some(
+                    (e) => Number(e.value) === Number(empId)
+                );
+                setSelectedEmployeeId(
+                    exists ? Number(empId) : null
+                );
+
+            } else {
+                const filteredEmployees = employeeOptions.filter(
+                    (e) => Number(e.value) === Number(empId)
+                );
+
+                setEmployeeList(filteredEmployees);
+
+                setSelectedEmployeeId(
+                    filteredEmployees.length > 0
+                        ? Number(empId)
+                        : null
+                );
+            }
+
+        } catch (error) {
+            console.error("Error fetching employees:", error);
+            Swal.fire(
+                "Error",
+                "Failed to fetch employee data. Please try again later.",
+                "error"
+            );
         }
     };
 
@@ -58,69 +163,93 @@ const MandatoryTraining = () => {
     ];
 
     const mappedData = () => {
-        return trainingList.map((item, index) => ({
-            sn: index + 1,
-            requisitionNumber: item.requisitionNumber || "-",
-            participantName: item.initiatingOfficerName || "-",
-            empDesigName: item.empDesigName || "-",
-            courseName: item.courseName || "-",
-            organizer: item.organizer || "-",
-            duration: item.duration || "-",
-            fromDate: item.fromDate ? format(new Date(item.fromDate), "dd-MM-yyyy") : "-",
-            toDate: item.toDate ? format(new Date(item.toDate), "dd-MM-yyyy") : "-",
-            venue: item.venue || "-",
-            registrationFee: item.registrationFee || "-",
-            action: (
-                <>
-                    <Tooltip id="Tooltip" className='text-white' />
-                    {item.status === "AP" ? (
-                        <>
-                            <button
-                                className="btn btn-sm btn-warning me-2"
-                                data-tooltip-id="Tooltip"
-                                data-tooltip-content="Edit"
-                                data-tooltip-place="top"
-                                onClick={() => handleEdit(item)}
-                            >
-                                <FaEdit className="fs-6" />
-                            </button>
-                            {["ROLE_ADMIN", "ROLE_SA_HRT", "ROLE_AD_HRT"].includes(roleName) &&
+        return trainingList.map((item, index) => {
+
+            const feedbackExists = feedbackList?.some(
+                feedback => Number(feedback?.requisitionId) === Number(item?.requisitionId)
+            );
+
+            return {
+                sn: index + 1,
+                requisitionNumber: item.requisitionNumber || "-",
+                participantName: item.initiatingOfficerName || "-",
+                empDesigName: item.empDesigName || "-",
+                courseName: item.courseName || "-",
+                organizer: item.organizer || "-",
+                duration: item.duration || "-",
+                fromDate: item.fromDate ? format(new Date(item.fromDate), "dd-MM-yyyy") : "-",
+                toDate: item.toDate ? format(new Date(item.toDate), "dd-MM-yyyy") : "-",
+                venue: item.venue || "-",
+                registrationFee: item.registrationFee || "-",
+                action: (
+                    <>
+                        <Tooltip id="Tooltip" className='text-white' />
+                        {item.status === "AP" ? (
+                            <>
                                 <button
-                                    className="btn btn-sm btn-success me-2"
-                                    onClick={() => handleAccept(item)}
+                                    className="btn btn-sm btn-warning me-2"
                                     data-tooltip-id="Tooltip"
-                                    data-tooltip-content="Accept"
+                                    data-tooltip-content="Edit"
+                                    data-tooltip-place="top"
+                                    onClick={() => handleEdit(item)}
+                                >
+                                    <FaEdit className="fs-6" />
+                                </button>
+                                {["ROLE_ADMIN", "ROLE_SA_HRT", "ROLE_AD_HRT"].includes(roleName) &&
+                                    <button
+                                        className="btn btn-sm btn-success me-2"
+                                        onClick={() => handleAccept(item)}
+                                        data-tooltip-id="Tooltip"
+                                        data-tooltip-content="Accept"
+                                        data-tooltip-place="top"
+                                    >
+                                        <MdLibraryAddCheck className="fs-6" />
+                                    </button>
+                                }
+                            </>
+                        ) : (
+                            <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold me-2">
+                                Approved
+                            </span>
+                        )}
+                        {(item.isAttend === "N" || item.isAttend === null) &&
+                            ["ROLE_SA_HRT", "ROLE_ADMIN"].includes(roleName) &&
+                            (item.fromDate && new Date(item.fromDate) <= new Date())
+                            &&
+                            (
+                                <button
+                                    className="btn btn-sm btn-primary me-2"
+                                    onClick={() => handleAttend(item)}
+                                    data-tooltip-id="Tooltip"
+                                    data-tooltip-content="Attendance"
                                     data-tooltip-place="top"
                                 >
-                                    <MdLibraryAddCheck className="fs-6" />
+                                    <FaUsersLine className="fs-6" />
                                 </button>
-                            }
-                        </>
-                    ) : (
-                        <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold me-2">
-                            Approved
-                        </span>
-                    )}
-                    {(item.isAttend === "N" || item.isAttend === null) &&
-                        ["ROLE_SA_HRT", "ROLE_ADMIN"].includes(roleName) &&
-                        (item.fromDate && new Date(item.fromDate) <= new Date())
-                        &&
-                        (
-                            <button
-                                className="btn btn-sm btn-primary me-2"
-                                onClick={() => handleAttend(item)}
-                                data-tooltip-id="Tooltip"
-                                data-tooltip-content="Attendance"
-                                data-tooltip-place="top"
-                            >
-                                <FaUsersLine className="fs-6" />
-                            </button>
-                        )}
-                </>
-            )
-        }));
+                            )}
+
+                        {(Number(item.initiatingOfficer) === Number(empId) ||
+                            ["ROLE_SA_HRT", "ROLE_ADMIN"].includes(roleName)) &&
+                            !feedbackExists && (item.isAttend === "Y" && item.status === "PA") && (
+                                <button
+                                    className="btn btn-sm btn-secondary me-2"
+                                    onClick={() => handleFeedbackClick(item)}
+                                    data-tooltip-id="Tooltip"
+                                    data-tooltip-content="Feedback"
+                                    data-tooltip-place="top"
+                                >
+                                    <MdFeedback className="fs-6" />
+                                </button>
+                            )}
+                    </>
+                )
+            }
+        });
     };
 
+    const handleFeedbackClick = (item) => {
+        navigate("/feedback-add", { state: item });
+    }
 
     const handleAttend = (item) => {
         setShowAttendModal(true);
@@ -162,7 +291,7 @@ const MandatoryTraining = () => {
                     timer: 2000,
                 });
                 handleAttendClose();
-                fetchMandatoryTrainings(empId, roleName);
+                fetchMandatoryTrainings(selectedEmployeeId, selectedYearOption);
             } else {
                 Swal.fire("Warning", response.message, "warning");
                 setSubmitting(false);
@@ -193,7 +322,7 @@ const MandatoryTraining = () => {
                     showConfirmButton: false,
                     timer: 2000,
                 });
-                fetchMandatoryTrainings(empId, roleName);
+                fetchMandatoryTrainings(selectedEmployeeId, selectedYearOption);
             } else {
                 Swal.fire("Warning", response.message, "warning");
             }
@@ -211,6 +340,10 @@ const MandatoryTraining = () => {
         navigate("/mandatory-training-add", { state: { requisitionId: item.requisitionId } });
     };
 
+    const handleChangeYear = (selectedOption) => {
+        setSelectedYearOption(selectedOption);
+    };
+
 
     return (
         <div>
@@ -223,6 +356,47 @@ const MandatoryTraining = () => {
                     <span className="pulse-dot"></span>
                 </span>
             </h3>
+
+            <div className="d-flex flex-wrap align-items-end justify-content-end gap-3 me-3 mt-2">
+
+                {/* Employee */}
+                <div className="d-flex align-items-center gap-2">
+                    <label className="fw-bold mb-0 text-nowrap">Employee :</label>
+                    <Select
+                        options={employeeList}
+                        value={employeeList?.find((e) => e.value === selectedEmployeeId) || null}
+                        onChange={(opt) => setSelectedEmployeeId(opt?.value ?? "")}
+                        isSearchable
+                        styles={{
+                            container: (provided) => ({
+                                ...provided,
+                                minWidth: "180px",
+                                width: "100%",
+                            }),
+                            singleValue: (provided) => ({
+                                ...provided,
+                                textAlign: "left",
+                            }),
+                        }}
+                        menuPortalTarget={document.body}
+                    />
+                </div>
+
+                {/* Year Dropdown */}
+                <div className="d-flex align-items-center gap-2">
+                    <label className="fw-bold mb-0 text-nowrap">Year :</label>
+                    <div style={{ width: '180px' }} className="text-start">
+                        <Select
+                            options={financialYearOptions}
+                            value={selectedYearOption}
+                            onChange={handleChangeYear}
+                            placeholder="Select Year"
+                            isSearchable={false}
+                        />
+                    </div>
+                </div>
+
+            </div>
 
             <div id="card-body" className="p-2 mt-2">
                 {<Datatable columns={columns} data={mappedData()} />}

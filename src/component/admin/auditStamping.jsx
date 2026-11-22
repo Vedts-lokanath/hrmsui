@@ -16,7 +16,7 @@ const AuditStampingList = () => {
   const today = new Date();
   const [fromDate, setFromDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [toDate, setToDate] = useState(today);
-  
+
   const roleName = localStorage.getItem("roleName");
   const loginId = localStorage.getItem("loginId");
   const username = localStorage.getItem("username");
@@ -36,7 +36,7 @@ const AuditStampingList = () => {
       const data = await getAuditStampingList(user.value, fornatFromDate, fornatToDate);
 
       setAuditStampList(Array.isArray(data) ? data : []);
-     
+
     } catch (err) {
       console.error("Failed to fetch audit data", err);
     }
@@ -54,13 +54,13 @@ const AuditStampingList = () => {
           ? allUsers
           : allUsers.filter((u) => String(u.loginId) === String(loginId));
 
-     const options = filteredData.map((u) => ({
-         value: u.username,
-         label: u.employeeName
-         ? `${u.username} (${u.employeeName})`
-         : u.username
-}));
-        
+        const options = filteredData.map((u) => ({
+          value: u.username,
+          label: u.employeeName
+            ? `${u.username} (${u.employeeName})`
+            : u.username
+        }));
+
         setUserList(options);
 
 
@@ -93,7 +93,7 @@ const AuditStampingList = () => {
       sn: index + 1,
       loginDate: item.loginDatetime ? format(new Date(item.loginDatetime), "dd-MM-yyyy HH:mm:ss a") : "-",
       ipAddress: item.ipAddress || "-",
-      logoutType: item.logoutType ? "Log out" : "Session Expired",
+      logoutType: item.logoutType == null ? "N/A" : item.logoutType === "L" ? "Log out" : "Session Expired",
       logoutDateTime: item.logoutDateTime ? format(new Date(item.logoutDateTime), "dd-MM-yyyy HH:mm:ss a") : "-",
     }));
   }, [auditStampList]);

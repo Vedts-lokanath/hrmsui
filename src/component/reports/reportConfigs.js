@@ -39,7 +39,7 @@ export const REPORT_CONFIGS = {
   "2": {
     fileName: "Training Report (Course)",
     columns: [
-      { name: "SN", selector: (row) => row.sn, sortable: false, align: 'text-center', width: "12%"  },
+      { name: "SN", selector: (row) => row.sn, sortable: false, align: 'text-center', width: "12%" },
       { name: "PIS No", selector: (row) => row.empNo, sortable: true, align: 'text-center', width: "18%" },
       { name: "Cadre", selector: (row) => row.desigCadre, sortable: true, align: 'text-center' },
       { name: "Employee Name", selector: (row) => row.initiatingOfficerName, sortable: true, align: 'text-left', width: "18%" },
@@ -54,6 +54,8 @@ export const REPORT_CONFIGS = {
       { name: "Organizing Agency", selector: (row) => row.organizer, sortable: true, align: 'text-left' },
       { name: "City", selector: (row) => row.venue, sortable: true, align: 'text-center' },
       { name: "Period (In days)", selector: (row) => row.duration, sortable: true, align: 'text-center' },
+      { name: "Start Date", selector: (row) => sqlToRegularDate(row.fromDate), sortable: true, align: 'text-center' },
+      { name: "End Date", selector: (row) => sqlToRegularDate(row.toDate), sortable: true, align: 'text-center' },
       { name: "Registration Fee (Rs.)", selector: (row) => formatIndianRupee(row.registrationFee), sortable: true, align: 'text-end' },
     ],
     fetchUrl: "course-training",
@@ -77,6 +79,8 @@ export const REPORT_CONFIGS = {
       { name: "Organizing Agency", selector: (row) => row.organizer, sortable: true, align: 'text-center' },
       { name: "City", selector: (row) => row.venue, sortable: true, align: 'text-center' },
       { name: "Period (In days)", selector: (row) => row.duration, sortable: true, align: 'text-center' },
+      { name: "Start Date", selector: (row) => sqlToRegularDate(row.fromDate), sortable: true, align: 'text-center' },
+      { name: "End Date", selector: (row) => sqlToRegularDate(row.toDate), sortable: true, align: 'text-center' },
       { name: "Registration Fee (Rs.)", selector: (row) => formatIndianRupee(row.registrationFee), sortable: true, align: 'text-end' },
       // { name: "Nos. of Papers Presented", selector: (row) => row.deputation, sortable: true, align: 'text-center', width: "10%" },
     ],

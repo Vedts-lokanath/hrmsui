@@ -2,7 +2,7 @@ import { ErrorMessage, Field, Form, Formik } from "formik";
 import DatePicker from "react-datepicker";
 import Select from "react-select";
 import { useEffect, useRef, useState } from "react";
-import { addRequisitionData, getAgencies, getCourseList, getJournalList, getRequisitionById, reqFileDownload, updateRequisitionData } from "../../service/training.service";
+import { addRequisitionData, courseBrochureFileDownload, getAgencies, getCourseList, getJournalList, getRequisitionById, reqFileDownload, updateRequisitionData } from "../../service/training.service";
 import Swal from "sweetalert2";
 import { handleApiError } from "../../service/master.service";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -37,6 +37,7 @@ const AddEditRequisition = () => {
     const [journalList, setJournalList] = useState([]);
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [courseData, setCourseData] = useState(null);
+    const [selectedCourseData, setSelectedCourseData] = useState(null);
 
     const [initialValues, setInitialValues] = useState({
         courseId: "",
@@ -108,6 +109,15 @@ const AddEditRequisition = () => {
             fetchRequisitionById(requisitionId);
         }
     }, [requisitionId]);
+
+    useEffect(() => {
+        if (initialValues.courseId && courseList.length > 0) {
+            const selectedCourse = courseList.find(
+                item => Number(item.courseId) === Number(initialValues.courseId)
+            );
+            setSelectedCourseData(selectedCourse || null);
+        }
+    }, [courseList, initialValues.courseId]);
 
 
     const fetchRequisitionById = async (id) => {
@@ -203,6 +213,36 @@ const AddEditRequisition = () => {
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
+        }
+    };
+
+    const handleCourseBrochurePreview = async (courseId) => {
+        try {
+            const response = await courseBrochureFileDownload(courseId);
+            const { data, fileName, contentType } = response;
+
+            if (data === '0') {
+                Swal.fire("Error", "File not found", "error");
+                return;
+            }
+
+            const blob = new Blob([data], { type: contentType });
+            const url = window.URL.createObjectURL(blob);
+
+            if (contentType === "application/pdf") {
+                window.open(url, "_blank");
+            } else {
+                const link = document.createElement("a");
+                link.href = url;
+                link.setAttribute("download", fileName);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            }
+        } catch (error) {
+            console.error("Course brochure preview failed:", error);
+            Swal.fire("Preview Failed", "Unable to preview the course brochure. Please try again.", "error");
         }
     };
 
@@ -377,6 +417,8 @@ const AddEditRequisition = () => {
 
         const selectCourseData = selected.data;
         if (!selectCourseData) return;
+
+        setSelectedCourseData(selectCourseData);
 
         const newOrgData = organizerList.find(
             item => item.organizerId === selectCourseData.organizerId
@@ -676,7 +718,7 @@ const AddEditRequisition = () => {
                                                 Self Payment
                                             </label>
 
-                                        <label>
+                                            <label>
                                                 <Field
                                                     type="radio"
                                                     name="modeOfPayment"
@@ -902,7 +944,7 @@ const AddEditRequisition = () => {
                                     </div>
                                 )}
 
-                                {["Self Payment", "NA"].includes(values.modeOfPayment)  && (
+                                {["Self Payment", "NA"].includes(values.modeOfPayment) && (
                                     <div className="row custom-modal-body text-start p-3">
                                         <div className="col-md-8">
                                             <label className="form-label">Reason</label>
@@ -942,6 +984,22 @@ const AddEditRequisition = () => {
                                                 />
                                             </div>
                                             <ErrorMessage name="multipartFileBrochure" component="div" className="invalid-msg" />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {selectedCourseData?.brochureName && (
+                                    <div className="col-12 text-start ms-4">
+                                          <label className="form-label small fw-medium text-secondary">Course Brochure</label>
+                                        <div>
+                                            <button
+                                                type="button"
+                                                className="btn btn-link text-primary p-0 text-decoration-none"
+                                                onClick={() => handleCourseBrochurePreview(selectedCourseData.courseId)}
+                                            >
+                                                <BsFileEarmark className="me-1 mb-1" />
+                                                {selectedCourseData.brochureName.replace(/^\d+_/, "")}
+                                            </button>
                                         </div>
                                     </div>
                                 )}
