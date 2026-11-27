@@ -742,8 +742,8 @@ const Requisition = () => {
                 }
             </div>
 
-            <div className="mt-3 small text-danger text-start px-3 fw-semibold">
-               Note:     A hard copy of the requisition, once approved by AD_HRT, shall be forwarded to the HRT Office for further processing.
+            <div className="mt-3 medium text-danger text-start px-3 fw-semibold fst-italic">
+               Note: A hard copy of the requisition, once approved by AD_HRT, shall be forwarded to the HRT Office for further processing.
             </div>
 
             {showModal &&

@@ -86,3 +86,15 @@ export const getReportData = async (url) => {
         throw error;
     }
 };
+
+export const getDhEvaluationAlertCount = async (roleName, empId) => {
+    try {
+        return (await axios.get(`${API_URL}api/dashboard/dh-evaluation-alert`, {
+            params: { roleName, empId },
+            headers: { 'Content-Type': 'application/json', ...authHeader() }
+        })).data;
+    } catch (error) {
+        console.error('Error occurred in getDhEvaluationAlertCount():', error);
+        throw error;
+    }
+};

@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Tooltip } from "react-tooltip";
+import { FaBell, FaClipboardList, FaTimes } from "react-icons/fa";
 import "./dashboard.css";
-import { getRequisitionDashboardCount } from "../../service/dashboard.service";
+import {
+    getDhEvaluationAlertCount,
+    getRequisitionDashboardCount,
+} from "../../service/dashboard.service";
+import { useNavigate } from "react-router-dom";
 
 const COURSE_NAME_TOOLTIP_ID = "course-name-tooltip";
 
@@ -581,8 +586,134 @@ const AdminDashboard = () => {
                 </div>
             )}
 
+            <DhEvaluationAlert />
         </div>
 
+    );
+};
+
+const DhEvaluationAlert = () => {
+
+    const navigate = useNavigate();
+    const roleName = localStorage.getItem("roleName");
+    const empId = localStorage.getItem("empId");
+    
+    const [alertRows, setAlertRows] = useState([]);
+    const [isOpen, setIsOpen] = useState(false);
+    const [error, setError] = useState("");
+    const [reloadKey, setReloadKey] = useState(0);
+    const totalRequisitions = alertRows.reduce(
+        (total, item) => total + (Number(item.requisitionCount) || 0),
+        0
+    );
+
+    useEffect(() => {
+        if (!["ROLE_DH", "ROLE_GH"].includes(roleName)) return undefined;
+
+        let isCurrent = true;
+        const fetchAlerts = async () => {
+            try {
+                const response = await getDhEvaluationAlertCount(roleName, empId);
+                if (!response?.success || !Array.isArray(response.data)) {
+                    throw new Error(response?.message || "Invalid evaluation alert response");
+                }
+
+                if (!isCurrent) return;
+                const rows = response.data.filter((item) => item && Number(item.requisitionCount) > 0);
+                setAlertRows(rows);
+                setError("");
+                setIsOpen(rows.length > 0);
+            } catch (fetchError) {
+                console.error("Evaluation alert Error:", fetchError);
+                if (!isCurrent) return;
+                setAlertRows([]);
+                setError("Couldn't load evaluation alerts. Please try again.");
+                setIsOpen(true);
+            }
+        };
+
+        fetchAlerts();
+        return () => {
+            isCurrent = false;
+        };
+    }, [roleName, empId, reloadKey]);
+
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        const timer = setTimeout(() => setIsOpen(false), 8000);
+        return () => clearTimeout(timer);
+    }, [isOpen, alertRows, error]);
+
+    if (!["ROLE_DH", "ROLE_GH"].includes(roleName) || (!alertRows.length && !error)) {
+        return null;
+    }
+
+    const handleNavigateEvaluation = (item) => {
+        navigate("/evaluation")
+    };
+
+    return (
+        <div className="evaluation-alert-widget">
+            {isOpen ? (
+                <section className="evaluation-alert-popup" aria-labelledby="evaluation-alert-title">
+                    <header className="evaluation-alert-header">
+                        <div className="evaluation-alert-heading">
+                            <FaBell aria-hidden="true" />
+                            <div>
+                                <h2 id="evaluation-alert-title">Evaluation pending</h2>
+                                <p>Requisitions awaiting your evaluation</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            className="evaluation-alert-close"
+                            onClick={() => setIsOpen(false)}
+                            aria-label="Close evaluation alerts"
+                        >
+                            <FaTimes aria-hidden="true" />
+                        </button>
+                    </header>
+
+                    {error ? (
+                        <div className="evaluation-alert-error" role="alert">
+                            <p>{error}</p>
+                            <button type="button" onClick={() => setReloadKey((key) => key + 1)}>
+                                Retry
+                            </button>
+                        </div>
+                    ) : (
+                        <ul className="evaluation-alert-list">
+                            {alertRows.map((item) => (
+                                <li
+                                    className="evaluation-alert-row cursor-pointer"
+                                    key={item.employeeId ?? item.employeeName}
+                                    onClick={() => handleNavigateEvaluation(item)}
+                                >
+                                    <span className="evaluation-alert-employee">
+                                        <FaClipboardList aria-hidden="true" />
+                                        <span>{item.employeeName || "Employee"}</span>
+                                    </span>
+                                    <strong className="evaluation-alert-count">
+                                        {item.requisitionCount}
+                                    </strong>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </section>
+            ) : (
+                <button
+                    type="button"
+                    className="evaluation-alert-reopen"
+                    onClick={() => setIsOpen(true)}
+                    aria-label="Show evaluation alerts"
+                >
+                    <FaBell aria-hidden="true" />
+                    <span>Evaluation alerts</span>
+                    {!error && <strong>{totalRequisitions}</strong>}
+                </button>
+            )}
+        </div>
     );
 };
 
