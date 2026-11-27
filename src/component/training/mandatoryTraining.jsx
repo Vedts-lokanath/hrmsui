@@ -228,8 +228,7 @@ const MandatoryTraining = () => {
                                 </button>
                             )}
 
-                        {(Number(item.initiatingOfficer) === Number(empId) ||
-                            ["ROLE_SA_HRT", "ROLE_ADMIN"].includes(roleName)) &&
+                        {Number(item.initiatingOfficer) === Number(empId) &&
                             !feedbackExists && (item.isAttend === "Y" && item.status === "PA") && (
                                 <button
                                     className="btn btn-sm btn-secondary me-2"
